@@ -7,7 +7,8 @@ import {
   FolderKanban,
   Newspaper,
   Briefcase,
-  LogOut
+  LogOut,
+  Home // <-- Tambahkan icon Home
 } from 'lucide-react';
 
 import { logoutAdmin } from '@/app/actions/auth';
@@ -28,19 +29,23 @@ export default function AdminSidebar() {
       path: '/admin',
       icon: <LayoutDashboard size={20} />
     },
-
+    // --- MENU BARU KITA ---
+    {
+      name: 'Manage Homepage',
+      path: '/admin/homepage',
+      icon: <Home size={20} /> 
+    },
+    // ----------------------
     {
       name: 'Manage Projects',
       path: '/admin/projects',
       icon: <FolderKanban size={20} />
     },
-
     {
       name: 'Manage News',
       path: '/admin/news',
       icon: <Newspaper size={20} />
     },
-
     {
       name: 'Manage Careers',
       path: '/admin/careers',
@@ -73,7 +78,6 @@ export default function AdminSidebar() {
         {adminMenu.map((item) => {
           // Highlight menu aktif
           // (Cek exact match untuk dashboard, includes untuk yang lain)
-
           const isActive =
             item.path === '/admin'
               ? pathname === '/admin'
