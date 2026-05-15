@@ -19,7 +19,7 @@ model Project {
   slug          String          @unique
   title         String
   category      ProjectCategory
-  location      String
+  location      String          // <--- Ini location yang asli, kita pertahankan
   architect     String?
   photographer  String?
   interior      String?
@@ -29,6 +29,16 @@ model Project {
   images        ProjectImage[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  
+  // --- TAMBAHAN FIELD BARU SESUAI DESAIN UI ---
+  buildYear         String?  // Tahun Terbangun / Terdesign
+  status            String?  // misal: "Build" atau "Design"
+  architectInCharge String?  
+  drafter           String?  
+  siteArea          String?  // misal: "120 m2"
+  constructedArea   String?  // misal: "200 m2"
+  collaborate       String?  
+  photographs       String?  
 }
 
 model ProjectImage {
@@ -67,4 +77,13 @@ model Career {
   isActive     Boolean  @default(true) // Untuk mematikan/menyalakan lowongan
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model HomepageSetting {
+  id          String   @id @default(uuid())
+  title       String   @default("Main Homepage")
+  imageUrls   String[] // Menyimpan banyak URL gambar sekaligus (Array)
+  delayTimer  Int      @default(3000) // Waktu delay antar gambar (dalam milidetik)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
 }

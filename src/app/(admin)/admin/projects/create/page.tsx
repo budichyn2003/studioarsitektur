@@ -82,31 +82,66 @@ export default function CreateProjectPage() {
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Location</label>
-              <input name="location" type="text" required className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <input name="location" type="text" required placeholder="Kabupaten / Kota" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
-            {/* INPUT TANGGAL (BARU) */}
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Project Date</label>
               <input name="projectDate" type="date" required className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
           </div>
 
+          {/* GRID TAMBAHAN UNTUK DATA BARU */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-dashed border-gray-200 pt-6 mt-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Build Year</label>
+              <input name="buildYear" type="text" placeholder="e.g. 2024" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Status</label>
+              <select name="status" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black bg-transparent">
+                <option value="Build">Build</option>
+                <option value="Design">Design</option>
+                <option value="On Progress">On Progress</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Architect In Charge</label>
+              <input name="architectInCharge" type="text" placeholder="Nama Arsitek" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Architect</label>
-              <input name="architect" type="text" placeholder="e.g. StackPlus Studio" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <label className="text-arch-grayMenu text-[14px]">Drafter</label>
+              <input name="drafter" type="text" placeholder="Nama Drafter" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Photographer</label>
-              <input name="photographer" type="text" placeholder="e.g. John Doe" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <label className="text-arch-grayMenu text-[14px]">Site Area (m2)</label>
+              <input name="siteArea" type="text" placeholder="e.g. 120" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Constructed Area (m2)</label>
+              <input name="constructedArea" type="text" placeholder="e.g. 200" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">In Collaborate</label>
+              <input name="collaborate" type="text" placeholder="Partner Kolaborasi" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Photographs</label>
+              <input name="photographs" type="text" placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            {/* Input Interior & Architect lama tetap ada jika sewaktu-waktu butuh */}
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Interior</label>
               <input name="interior" type="text" placeholder="e.g. Jane Doe" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 border-t border-dashed border-gray-200 pt-6 mt-2">
             <label className="text-arch-grayMenu text-[14px]">Description</label>
             <textarea name="description" rows={5} required className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-arch-black resize-none" />
           </div>

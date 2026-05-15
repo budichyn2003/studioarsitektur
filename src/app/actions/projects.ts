@@ -14,6 +14,17 @@ export async function createProject(formData: FormData) {
     const photographer = formData.get('photographer') as string;
     const interior = formData.get('interior') as string;
     const projectDateInput = formData.get('projectDate') as string;
+    
+    // --- TANGKAPAN DATA BARU ---
+    const buildYear = formData.get('buildYear') as string;
+    const status = formData.get('status') as string;
+    const architectInCharge = formData.get('architectInCharge') as string;
+    const drafter = formData.get('drafter') as string;
+    const siteArea = formData.get('siteArea') as string;
+    const constructedArea = formData.get('constructedArea') as string;
+    const collaborate = formData.get('collaborate') as string;
+    const photographs = formData.get('photographs') as string;
+
     const imageFile = formData.get('image') as File;
 
     if (!imageFile) throw new Error("Image is required");
@@ -38,6 +49,15 @@ export async function createProject(formData: FormData) {
         interior,
         descriptionId: description, 
         projectDate: projectDateInput ? new Date(projectDateInput) : new Date(),
+        // --- SIMPAN DATA BARU ---
+        buildYear,
+        status,
+        architectInCharge,
+        drafter,
+        siteArea,
+        constructedArea,
+        collaborate,
+        photographs,
         images: {
           create: { url: publicUrl, width: 1920, height: 1080, order: 0 }
         }
@@ -73,6 +93,16 @@ export async function updateProject(id: string, formData: FormData) {
     const photographer = formData.get('photographer') as string;
     const interior = formData.get('interior') as string;
     const projectDateInput = formData.get('projectDate') as string;
+
+    // --- TANGKAPAN DATA BARU ---
+    const buildYear = formData.get('buildYear') as string;
+    const status = formData.get('status') as string;
+    const architectInCharge = formData.get('architectInCharge') as string;
+    const drafter = formData.get('drafter') as string;
+    const siteArea = formData.get('siteArea') as string;
+    const constructedArea = formData.get('constructedArea') as string;
+    const collaborate = formData.get('collaborate') as string;
+    const photographs = formData.get('photographs') as string;
     
     await prisma.project.update({
       where: { id },
@@ -86,6 +116,15 @@ export async function updateProject(id: string, formData: FormData) {
         interior,
         descriptionId: description, 
         projectDate: projectDateInput ? new Date(projectDateInput) : undefined,
+        // --- SIMPAN DATA BARU ---
+        buildYear,
+        status,
+        architectInCharge,
+        drafter,
+        siteArea,
+        constructedArea,
+        collaborate,
+        photographs,
       },
     });
 
@@ -112,7 +151,6 @@ export async function updateProject(id: string, formData: FormData) {
   }
 }
 
-// FUNGSI BARU UNTUK MENGAMBIL DATA LAMA SAAT EDIT
 export async function getProject(id: string) {
   try {
     const project = await prisma.project.findUnique({

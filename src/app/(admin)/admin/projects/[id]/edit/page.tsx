@@ -2,26 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Upload, Save, Loader2, X } from 'lucide-react';
+import { ArrowLeft, Upload, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { updateProject, getProject } from '@/app/actions/projects';
 
 export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
-  const [projectId, setProjectId] = useState<string>('');
+  const [projectId, setProjectId] = useState('');
   const [projectData, setProjectData] = useState<any>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
   const router = useRouter();
 
-  // Menarik data asli saat halaman dibuka
   useEffect(() => {
     params.then(p => {
       setProjectId(p.id);
-      getProject(p.id).then((data) => {
+      getProject(p.id).then(data => {
         setProjectData(data);
-        setFetching(false);
+        if (data?.images?.[0]?.url) {
+          setPreviewImage(data.images[0].url);
+        }
       });
     });
   }, [params]);
@@ -29,6 +31,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       setPreviewImage(URL.createObjectURL(file));
     }
   };
@@ -38,6 +41,8 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    if (imageFile) formData.append('image', imageFile);
+
     const result = await updateProject(projectId, formData);
 
     if (result.success) {
@@ -49,17 +54,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  // Menampilkan state loading saat data sedang ditarik
-  if (fetching) return <div className="p-8 text-center text-arch-grayMenu mt-20">Memuat Data Proyek...</div>;
-  if (!projectData) return <div className="p-8 text-center text-red-500 mt-20">Proyek tidak ditemukan!</div>;
+  if (!projectData) return <div className="p-8 mt-20 text-center">Memuat Data Project...</div>;
 
-  // Format tanggal untuk HTML input date (YYYY-MM-DD)
-  const formattedDate = projectData.projectDate 
-    ? new Date(projectData.projectDate).toISOString().split('T')[0] 
-    : '';
-
-  // Menentukan gambar mana yang ditampilkan (Preview baru atau Gambar lama dari DB)
-  const displayImage = previewImage || (projectData.images[0] ? projectData.images[0].url : null);
+  const formattedDate = projectData.projectDate ? new Date(projectData.projectDate).toISOString().split('T')[0] : '';
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-5xl flex flex-col gap-8">
@@ -71,15 +68,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <form className="grid grid-cols-1 lg:grid-cols-3 gap-8" onSubmit={handleSubmit}>
-        
-        {/* Kolom Kiri: Upload & Preview Gambar */}
         <div className="lg:col-span-1 flex flex-col gap-4">
-          <label className="font-semibold text-arch-black">Update Cover (Opsional)</label>
+          <label className="font-semibold text-arch-black">Update Cover</label>
           <div className="relative w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-white hover:border-arch-black transition-colors cursor-pointer group">
-            {displayImage ? (
+            {previewImage ? (
               <>
-                <img src={displayImage} alt="Preview" className="w-full h-full object-cover" />
-                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer">
+                <Image src={previewImage} alt="Preview" fill className="object-cover" />
+                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity z-10">
                   <Upload size={32} className="text-white mb-2" />
                   <span className="text-white text-[14px]">Ganti Gambar</span>
                   <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" />
@@ -88,19 +83,17 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             ) : (
               <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-4 text-center">
                 <Upload size={40} className="text-arch-grayMenu mb-2" />
-                <span className="text-arch-grayMenu text-[14px]">Upload New Image</span>
+                <span className="text-arch-grayMenu text-[14px]">Upload Image</span>
                 <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" />
               </label>
             )}
           </div>
-          <p className="text-[12px] text-gray-500 text-center">Kosongkan jika tidak ingin mengganti gambar.</p>
         </div>
 
-        {/* Kolom Kanan: Data Proyek (Sudah ada Pre-fill / defaultValue) */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">Project Title</label>
-            <input name="title" type="text" required defaultValue={projectData.title} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black text-[18px] text-arch-black font-medium" />
+            <input name="title" type="text" defaultValue={projectData.title} required className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black text-[18px] text-arch-black font-medium" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -114,32 +107,67 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Location</label>
-              <input name="location" type="text" required defaultValue={projectData.location} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <input name="location" type="text" defaultValue={projectData.location} required className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Project Date</label>
-              <input name="projectDate" type="date" required defaultValue={formattedDate} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <input name="projectDate" type="date" defaultValue={formattedDate} required className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+          </div>
+
+          {/* GRID DATA BARU */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-dashed border-gray-200 pt-6 mt-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Build Year</label>
+              <input name="buildYear" type="text" defaultValue={projectData.buildYear || ''} placeholder="e.g. 2024" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Status</label>
+              <select name="status" defaultValue={projectData.status || 'Build'} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black bg-transparent">
+                <option value="Build">Build</option>
+                <option value="Design">Design</option>
+                <option value="On Progress">On Progress</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Architect In Charge</label>
+              <input name="architectInCharge" type="text" defaultValue={projectData.architectInCharge || ''} placeholder="Nama Arsitek" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Architect</label>
-              <input name="architect" type="text" defaultValue={projectData.architect || ''} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <label className="text-arch-grayMenu text-[14px]">Drafter</label>
+              <input name="drafter" type="text" defaultValue={projectData.drafter || ''} placeholder="Nama Drafter" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Photographer</label>
-              <input name="photographer" type="text" defaultValue={projectData.photographer || ''} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <label className="text-arch-grayMenu text-[14px]">Site Area (m2)</label>
+              <input name="siteArea" type="text" defaultValue={projectData.siteArea || ''} placeholder="e.g. 120" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Interior</label>
-              <input name="interior" type="text" defaultValue={projectData.interior || ''} className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+              <label className="text-arch-grayMenu text-[14px]">Constructed Area (m2)</label>
+              <input name="constructedArea" type="text" defaultValue={projectData.constructedArea || ''} placeholder="e.g. 200" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">In Collaborate</label>
+              <input name="collaborate" type="text" defaultValue={projectData.collaborate || ''} placeholder="Partner Kolaborasi" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Photographs</label>
+              <input name="photographs" type="text" defaultValue={projectData.photographs || ''} placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Interior</label>
+              <input name="interior" type="text" defaultValue={projectData.interior || ''} placeholder="e.g. Jane Doe" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-dashed border-gray-200 pt-6 mt-2">
             <label className="text-arch-grayMenu text-[14px]">Description</label>
-            <textarea name="description" rows={5} required defaultValue={projectData.descriptionId || ''} className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-arch-black resize-none" />
+            <textarea name="description" rows={5} defaultValue={projectData.descriptionId || ''} required className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-arch-black resize-none" />
           </div>
 
           <button type="submit" disabled={loading} className="bg-arch-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-opacity-90 disabled:bg-gray-400 transition-all mt-4">

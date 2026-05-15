@@ -1,128 +1,105 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const projectId = resolvedParams.id;
-
-  if (!projectId) return notFound();
-
-  // 1. Ambil Data Proyek Saat Ini
+  
   const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: { images: { orderBy: { order: 'asc' } } },
+    where: { id: resolvedParams.id },
+    include: { 
+      images: { orderBy: { order: 'asc' } } 
+    }
   });
 
   if (!project) return notFound();
 
-  // 2. Ambil Proyek Selanjutnya (Untuk tombol Next di kanan atas)
-  const nextProject = await prisma.project.findFirst({
-    where: { createdAt: { gt: project.createdAt } },
-    orderBy: { createdAt: 'asc' },
+  const allProjects = await prisma.project.findMany({
+    orderBy: { projectDate: 'desc' }, 
+    select: { id: true, title: true }
   });
 
-  // 3. LOGIKA PENOMORAN PROYEK BERDASARKAN KATEGORI & TANGGAL TERTUA
-  // Ambil semua proyek dengan kategori yang sama, urutkan dari tanggal paling lama (asc)
-  const categoryProjects = await prisma.project.findMany({
-    where: { category: project.category },
-    orderBy: [
-      { projectDate: 'asc' }, // Tahun terlama jadi nomor 1
-      { createdAt: 'asc' }    // Jika tahunnya sama persis, urutkan dari yang pertama kali diinput
-    ],
-    select: { id: true }
-  });
-
-  // Cari index proyek saat ini di dalam daftar tersebut, lalu tambah 1
-  const projectIndex = categoryProjects.findIndex(p => p.id === project.id);
-  const projectNumber = projectIndex !== -1 ? projectIndex + 1 : 1;
+  const currentIndex = allProjects.findIndex(p => p.id === project.id);
   
-  // Format nomor jadi 2 digit (contoh: 01, 02, 03)
-  const formattedNumber = projectNumber.toString().padStart(2, '0');
-
-  // Format Tanggal untuk ditampilkan
-  const projectYear = new Date(project.projectDate).getFullYear();
-  const formattedFullDate = new Intl.DateTimeFormat('id-ID', { 
-    day: 'numeric', month: 'long', year: 'numeric' 
-  }).format(new Date(project.projectDate));
+  const nextProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
+  const prevProject = currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
 
   return (
-    <div className="w-full min-h-screen pt-8 pb-20 pl-8 md:pl-24 lg:pl-[20%] pr-8 md:pr-16">
-      
-      {/* BAGIAN ATAS: Navigasi "Next" di Kanan Atas */}
-      <div className="w-full flex justify-end mb-12 h-[40px]">
-        {nextProject && (
-          <Link href={`/project/${nextProject.id}`} className="group text-right">
-            <span className="block text-[#999999] text-[14px] group-hover:text-black transition-colors mb-1">
-              Next
-            </span>
-            <span className="block text-black text-[18px] md:text-[22px] font-medium tracking-tight">
-              {nextProject.title}
-            </span>
-          </Link>
+    // Jarak Kiri Diperbarui: lg:pl-[320px] xl:pl-[380px]
+    <div className="w-full min-h-screen pt-12 pb-32 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-8">
+
+      {/* TOP NAVIGATION: Previous & Next */}
+      <div className="flex justify-between items-end w-full max-w-5xl mb-2">
+        <div className="flex flex-col">
+          {prevProject ? (
+            <Link href={`/project/${prevProject.id}`} className="group">
+              <span className="text-[#999999] text-[13px] mb-1 block group-hover:text-black transition-colors">Previous</span>
+              <span className="text-black text-[20px] md:text-[24px] font-medium transition-colors">{prevProject.title}</span>
+            </Link>
+          ) : <div />}
+        </div>
+        <div className="flex flex-col text-right">
+          {nextProject ? (
+            <Link href={`/project/${nextProject.id}`} className="group">
+              <span className="text-[#999999] text-[13px] mb-1 block group-hover:text-black transition-colors">Next</span>
+              <span className="text-black text-[20px] md:text-[24px] font-medium transition-colors">{nextProject.title}</span>
+            </Link>
+          ) : <div />}
+        </div>
+      </div>
+
+      {/* IMAGE GALLERY (Ukuran Gambar Diperkecil agar Estetik) */}
+      <div className="w-full max-w-5xl flex flex-row gap-4 md:gap-6 overflow-x-auto snap-x pb-4" style={{ scrollbarWidth: 'none' }}>
+        {project.images.length > 0 ? (
+          project.images.map((image, index) => (
+            <div 
+              key={image.id} 
+              // Lebar gambar diubah menjadi 280px (Tablet) dan 320px (Desktop)
+              className="relative w-[75%] md:w-[280px] lg:w-[320px] aspect-[3/4] shrink-0 snap-center bg-gray-50"
+            >
+              <Image 
+                src={image.url} 
+                alt={`${project.title} - Image ${index + 1}`} 
+                fill 
+                className="object-cover"
+                sizes="(max-width: 768px) 75vw, 320px"
+                priority={index === 0} 
+              />
+            </div>
+          ))
+        ) : (
+          <div className="w-full md:w-[320px] aspect-[3/4] bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+            No Images Available
+          </div>
         )}
       </div>
 
-      {/* BAGIAN TENGAH: Galeri Gambar Horizontal */}
-      <div className="w-full mb-12">
-        <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x pb-4">
-          {project.images.map((img) => (
-            <img 
-              key={img.id}
-              src={img.url} 
-              alt={project.title} 
-              className="h-[300px] md:h-[480px] w-auto object-cover snap-center bg-gray-50"
-              loading="lazy"
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* BAGIAN BAWAH: Detail & Deskripsi */}
-      <div className="w-full max-w-4xl">
+      {/* PROJECT INFO (Title, Specs, Description) */}
+      <div className="flex flex-col w-full max-w-3xl mt-4">
         
-        <div className="mb-10">
-          {/* LABEL BARU: Kategori, Nomor Urut, dan Tahun */}
-          <div className="flex items-center gap-3 text-[#999999] text-[12px] uppercase tracking-[0.2em] mb-4">
-            <span className="text-black font-medium">{project.category}</span>
-            <span className="w-1 h-1 bg-[#d1d1d1] rounded-full"></span>
-            <span>PROJECT NO. {formattedNumber}</span>
-            <span className="w-1 h-1 bg-[#d1d1d1] rounded-full"></span>
-            <span>{projectYear}</span>
-          </div>
-
-          <h1 className="text-black text-[32px] font-medium tracking-tight mb-1">
-            {project.title}
-          </h1>
-          <p className="text-[#999999] text-[15px]">
-            {project.location}
-          </p>
-        </div>
-
-        {/* Tabel Detail */}
-        <div className="flex flex-col gap-4 mb-12 text-[15px]">
-          <div className="grid grid-cols-[150px_1fr] md:grid-cols-[200px_1fr]">
-            <span className="text-[#999999]">Date</span>
-            <span className="text-black">{formattedFullDate}</span>
-          </div>
-          <div className="grid grid-cols-[150px_1fr] md:grid-cols-[200px_1fr]">
-            <span className="text-[#999999]">Architect</span>
-            <span className="text-black">{project.architect || "StackPlus Studio"}</span>
-          </div>
-          <div className="grid grid-cols-[150px_1fr] md:grid-cols-[200px_1fr]">
-            <span className="text-[#999999]">Photographer</span>
-            <span className="text-black">{project.photographer || "-"}</span>
-          </div>
-          <div className="grid grid-cols-[150px_1fr] md:grid-cols-[200px_1fr]">
-            <span className="text-[#999999]">Interior</span>
-            <span className="text-black">{project.interior || "-"}</span>
-          </div>
-        </div>
-
-        {/* Deskripsi */}
-        <p className="text-black text-[15px] leading-[1.8] text-justify whitespace-pre-wrap">
-          {project.descriptionId}
+        <h1 className="text-[28px] md:text-[36px] font-medium text-black tracking-tight mb-1">
+          {project.title}
+        </h1>
+        <p className="text-[#999999] text-[15px] mb-12">
+          {project.location}{project.buildYear ? `, ${project.buildYear}` : ''}
         </p>
+
+        {/* Grid Spesifikasi */}
+        <div className="grid grid-cols-[160px_1fr] md:grid-cols-[200px_1fr] gap-y-5 text-[14px] mb-16">
+          {project.status && <><span className="text-[#999999]">Status</span><span className="text-black font-medium">{project.status}</span></>}
+          {project.architectInCharge && <><span className="text-[#999999]">Architect In Charge</span><span className="text-black font-medium">{project.architectInCharge}</span></>}
+          {project.drafter && <><span className="text-[#999999]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>}
+          {project.siteArea && <><span className="text-[#999999]">Site Area</span><span className="text-black font-medium">{project.siteArea} m2</span></>}
+          {project.constructedArea && <><span className="text-[#999999]">Constructed Area</span><span className="text-black font-medium">{project.constructedArea} m2</span></>}
+          {project.collaborate && <><span className="text-[#999999]">In Collaborate</span><span className="text-black font-medium">{project.collaborate}</span></>}
+          {project.photographs && <><span className="text-[#999999]">Photographs</span><span className="text-black font-medium">{project.photographs}</span></>}
+        </div>
+
+        {/* Description */}
+        <div className="text-[#333333] text-[15px] leading-[1.8] whitespace-pre-wrap text-justify">
+          {project.descriptionId}
+        </div>
         
       </div>
 

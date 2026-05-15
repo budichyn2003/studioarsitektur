@@ -9,7 +9,8 @@ export default async function CareerListPage() {
   });
 
   return (
-    <div className="w-full min-h-screen px-6 md:px-20 py-16 flex flex-col">
+    // Menambahkan padding kiri untuk konsistensi jarak dengan Sidebar
+    <div className="w-full min-h-screen pt-16 pb-24 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col">
       {/* Header */}
       <h1 className="text-black text-[32px] md:text-[40px] font-medium mb-4 tracking-tight">
         Join Our Team
