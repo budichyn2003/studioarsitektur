@@ -1,88 +1,65 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Briefcase, Mail } from "lucide-react";
 
-export default async function CareerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params;
-  const careerId = resolvedParams.id;
-
-  if (!careerId) return notFound();
-
-  const career = await prisma.career.findUnique({
-    where: { id: careerId },
+export default async function CareerListPage() {
+  // Hanya ambil lowongan yang sedang aktif
+  const careers = await prisma.career.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: 'desc' },
   });
 
-  // Jika lowongan tidak ada atau sudah ditutup
-  if (!career || !career.isActive) return notFound();
-
-  // --- KONFIGURASI EMAIL TEMPLATE ---
-  const emailTo = "budigubernur15@gmail.com";
-  const emailSubject = `Lamaran - ${career.title}`;
-  const emailBody = `Halo Tim N Architecture,
-
-Saya tertarik untuk melamar posisi ${career.title} yang sedang dibuka.
-
-Bersama email ini, saya lampirkan dokumen pendukung sesuai kualifikasi:
-1. Curriculum Vitae (CV)
-2. Portfolio
-
-(Silakan hapus teks ini dan ketik perkenalan singkat atau pesan tambahan Anda di sini...)
-
-Terima kasih atas waktu dan kesempatannya.
-
-Salam,
-[Nama Anda di Sini]`;
-
-  // Mengubah teks di atas menjadi format link (URL) yang aman
-  const mailtoLink = `mailto:${emailTo}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-
   return (
-    <div className="w-full min-h-screen pt-8 pb-20 pl-8 md:pl-24 lg:pl-[20%] pr-8 md:pr-16">
-      
-      <Link href="/career" className="inline-flex items-center gap-2 text-[#999999] hover:text-black transition-colors mb-10 text-[14px]">
-        <ArrowLeft size={16} /> Back to Careers
-      </Link>
+    <div className="w-full min-h-screen px-6 md:px-20 py-16 flex flex-col">
+      {/* Header */}
+      <h1 className="text-black text-[32px] md:text-[40px] font-medium mb-4 tracking-tight">
+        Join Our Team
+      </h1>
+      <p className="text-[#777777] text-[16px] max-w-2xl mb-16 leading-relaxed">
+        We are always looking for talented individuals who are passionate about architecture and design. Explore our open positions below.
+      </p>
 
-      <div className="w-full max-w-3xl">
-        <h1 className="text-black text-[36px] md:text-[42px] font-medium tracking-tight mb-6">
-          {career.title}
-        </h1>
+      {/* Grid Layout 2 Kolom */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
+        {careers.map((career) => {
+          // Mengambil sedikit bagian dari deskripsi untuk preview
+          const excerpt = career.description.length > 140 
+            ? career.description.substring(0, 140) + '...' 
+            : career.description;
 
-        <div className="flex flex-wrap items-center gap-6 text-[#999999] text-[14px] mb-12 border-b border-gray-100 pb-6">
-          <div className="flex items-center gap-2">
-            <Briefcase size={16} />
-            <span>{career.type}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin size={16} />
-            <span>{career.location}</span>
-          </div>
-        </div>
-
-        <div className="mb-12">
-          <h2 className="text-black text-[20px] font-medium mb-4">Job Description</h2>
-          <div className="text-[#777777] text-[15px] leading-[1.8] whitespace-pre-wrap">
-            {career.description}
-          </div>
-        </div>
-
-        <div className="mb-16">
-          <h2 className="text-black text-[20px] font-medium mb-4">Requirements</h2>
-          <div className="text-[#777777] text-[15px] leading-[1.8] whitespace-pre-wrap">
-            {career.requirements}
-          </div>
-        </div>
-
-        {/* Tombol Apply yang langsung buka email dengan template dinamis */}
-        <a 
-          href={mailtoLink}
-          className="inline-flex items-center gap-3 bg-black text-white px-8 py-4 rounded-sm font-medium hover:bg-gray-800 transition-colors"
-        >
-          <Mail size={18} /> Apply Now
-        </a>
-
+          return (
+            <Link 
+              key={career.id} 
+              href={`/career/${career.id}`} 
+              className="group w-full bg-white border border-gray-200 rounded-2xl p-8 flex flex-col justify-between gap-6 hover:shadow-lg transition-shadow duration-300 min-h-[240px]"
+            >
+              <div className="flex flex-col gap-4">
+                <h2 className="text-black text-[22px] font-normal tracking-tight group-hover:text-gray-600 transition-colors">
+                  {career.title}
+                </h2>
+                <p className="text-[#999999] text-[14px] leading-[1.8] line-clamp-3">
+                  {excerpt}
+                </p>
+              </div>
+              
+              {/* Tag / Badge Pill Sesuai Desain */}
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <span className="px-5 py-1.5 border border-gray-300 rounded-full text-[13px] text-black whitespace-nowrap">
+                  {career.type}
+                </span>
+                <span className="px-5 py-1.5 border border-gray-300 rounded-full text-[13px] text-black whitespace-nowrap">
+                  {career.location}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
+
+      {careers.length === 0 && (
+        <div className="p-12 text-center bg-gray-50 rounded-2xl border border-gray-200 w-full max-w-5xl">
+          <p className="text-[#777777] text-[16px]">Saat ini tidak ada lowongan yang terbuka. Silakan cek kembali nanti!</p>
+        </div>
+      )}
     </div>
   );
 }
