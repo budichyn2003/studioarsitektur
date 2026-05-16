@@ -80,10 +80,11 @@ model Career {
 }
 
 model HomepageSetting {
-  id          String   @id @default(uuid())
-  title       String   @default("Main Homepage")
-  imageUrls   String[] // Menyimpan banyak URL gambar sekaligus (Array)
-  delayTimer  Int      @default(3000) // Waktu delay antar gambar (dalam milidetik)
-  isActive    Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  title         String   @default("Main Homepage")
+  imageUrls     String[] // Menyimpan banyak URL gambar sekaligus (Array)
+  delayTimer    Int      @default(3000) // Waktu delay antar gambar (dalam milidetik)
+  showAboutHero Boolean  @default(false) // <--- SAKLAR ABOUT US
+  isActive      Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
 }

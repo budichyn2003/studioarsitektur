@@ -2,32 +2,54 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Upload, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Upload, Save, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/app/actions/projects';
 
 export default function CreateProjectPage() {
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Handle Multi-Upload & Limit maksimal 5 gambar
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setPreviewImage(URL.createObjectURL(file));
+    const files = Array.from(e.target.files || []);
+    
+    if (imageFiles.length + files.length > 5) {
+      alert("Maksimal 5 gambar yang diperbolehkan!");
+      return;
     }
+
+    if (files.length > 0) {
+      setImageFiles(prev => [...prev, ...files]);
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setPreviewImages(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  // Hapus gambar dari list preview
+  const removeImage = (indexToRemove: number) => {
+    setImageFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    setPreviewImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
+    if (imageFiles.length === 0) {
+      alert("Harap unggah minimal 1 gambar!");
+      return;
+    }
 
+    setLoading(true);
     const formData = new FormData(e.currentTarget);
-    if (imageFile) formData.append('image', imageFile);
+    
+    // Gabungkan semua file gambar ke dalam FormData dengan key 'images'
+    imageFiles.forEach(file => {
+      formData.append('images', file);
+    });
 
     const result = await createProject(formData);
 
@@ -41,7 +63,7 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-5xl flex flex-col gap-8">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-5xl flex flex-col gap-8 pb-20">
       <div className="flex items-center gap-4">
         <Link href="/admin/projects" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowLeft size={24} />
@@ -50,21 +72,40 @@ export default function CreateProjectPage() {
       </div>
 
       <form className="grid grid-cols-1 lg:grid-cols-3 gap-8" onSubmit={handleSubmit}>
+        
+        {/* KOLOM KIRI: MULTI IMAGE UPLOAD */}
         <div className="lg:col-span-1 flex flex-col gap-4">
-          <label className="font-semibold text-arch-black">Project Cover</label>
-          <div className="relative w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-white hover:border-arch-black transition-colors cursor-pointer">
-            {previewImage ? (
-              <Image src={previewImage} alt="Preview" fill className="object-cover" />
-            ) : (
-              <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-4 text-center">
-                <Upload size={40} className="text-arch-grayMenu mb-2" />
-                <span className="text-arch-grayMenu text-[14px]">Upload Image</span>
-                <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" required />
+          <label className="font-semibold text-arch-black">Project Images (Max 5)</label>
+          <div className="grid grid-cols-2 gap-4">
+            
+            {/* Preview Gambar yang sudah dipilih */}
+            {previewImages.map((src, idx) => (
+              <div key={idx} className={`relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group ${idx === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-[3/4]'}`}>
+                <Image src={src} alt={`Preview ${idx + 1}`} fill className="object-cover" />
+                <button 
+                  type="button" 
+                  onClick={() => removeImage(idx)}
+                  className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                >
+                  <X size={16} />
+                </button>
+                {idx === 0 && <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded">COVER</span>}
+              </div>
+            ))}
+
+            {/* Tombol Add Image */}
+            {previewImages.length < 5 && (
+              <label className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-arch-black cursor-pointer bg-gray-50 transition-colors ${previewImages.length === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-[3/4]'}`}>
+                <Upload size={24} className="text-arch-grayMenu mb-2" />
+                <span className="text-arch-grayMenu text-[12px]">Upload</span>
+                <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
               </label>
             )}
+
           </div>
         </div>
 
+        {/* KOLOM KANAN: FORM INPUT DATA (Sama seperti sebelumnya) */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">Project Title</label>
@@ -90,7 +131,6 @@ export default function CreateProjectPage() {
             </div>
           </div>
 
-          {/* GRID TAMBAHAN UNTUK DATA BARU */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-dashed border-gray-200 pt-6 mt-2">
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Build Year</label>
@@ -134,7 +174,6 @@ export default function CreateProjectPage() {
               <label className="text-arch-grayMenu text-[14px]">Photographs</label>
               <input name="photographs" type="text" placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
-            {/* Input Interior & Architect lama tetap ada jika sewaktu-waktu butuh */}
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Interior</label>
               <input name="interior" type="text" placeholder="e.g. Jane Doe" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
@@ -148,7 +187,7 @@ export default function CreateProjectPage() {
 
           <button type="submit" disabled={loading} className="bg-arch-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-opacity-90 disabled:bg-gray-400 transition-all mt-4">
             {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />}
-            {loading ? 'Saving...' : 'Save Project'}
+            {loading ? 'Menyimpan Semua Gambar...' : 'Save Project'}
           </button>
         </div>
       </form>

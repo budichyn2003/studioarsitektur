@@ -16,6 +16,12 @@ const nextConfig = {
       },
     ],
   },
+  // Menambahkan batas upload untuk Server Actions menjadi 20MB
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '20mb',
+    },
+  },
 };
 
 export default nextConfig;
