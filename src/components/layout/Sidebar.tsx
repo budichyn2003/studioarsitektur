@@ -39,13 +39,13 @@ export default function Sidebar() {
   return (
     <aside className="w-[300px] h-screen fixed left-0 top-0 flex flex-col pt-12 pb-10 px-12 bg-white z-50">
       
-      {/* Logo Section (Sudah dibungkus dengan Link menuju Homepage /) */}
-      <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+      {/* Logo Section (Menggunakan tag 'a' murni untuk bypass bug Next.js Link di Vercel) */}
+      <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
         <div className="w-[42px] h-[42px] bg-arch-black text-white flex items-center justify-center font-bold text-2xl tracking-tighter">
           N
         </div>
         <span className="text-arch-black font-medium text-[16px] tracking-wide">Architecture</span>
-      </Link>
+      </a>
 
       {/* Main Navigation */}
       <nav className="flex-grow flex flex-col justify-center gap-6">
