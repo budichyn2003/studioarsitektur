@@ -8,14 +8,69 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/app/actions/projects';
 
+// --- MESIN KOMPRESOR OTOMATIS (Client-Side) ---
+const compressImage = async (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = document.createElement('img');
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        // Batasi resolusi maksimal ke Full HD (1920x1080) agar file kecil tapi tetap tajam
+        const MAX_WIDTH = 1920; 
+        const MAX_HEIGHT = 1080;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round(height * MAX_WIDTH / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round(width * MAX_HEIGHT / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Kompres menjadi JPEG dengan kualitas 80% (Sangat optimal untuk web)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            // Ubah ekstensi file asli menjadi .jpg
+            const newFileName = file.name.replace(/\.[^/.]+$/, ".jpg");
+            const newFile = new File([blob], newFileName, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          } else {
+            resolve(file); // Jika gagal kompres, kembalikan file asli agar tidak error
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+// ----------------------------------------------
+
 export default function CreateProjectPage() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Handle Multi-Upload & Limit maksimal 5 gambar
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Multi-Upload & Limit maksimal 5 gambar + KOMPRESI OTOMATIS
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
     if (imageFiles.length + files.length > 5) {
@@ -24,8 +79,12 @@ export default function CreateProjectPage() {
     }
 
     if (files.length > 0) {
-      setImageFiles(prev => [...prev, ...files]);
-      const newPreviews = files.map(file => URL.createObjectURL(file));
+      // Jalankan proses kompresi secara paralel untuk semua gambar yang dipilih
+      const compressedFiles = await Promise.all(files.map(file => compressImage(file)));
+
+      // Simpan file yang SUDAH DIKOMPRES ke dalam state
+      setImageFiles(prev => [...prev, ...compressedFiles]);
+      const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
       setPreviewImages(prev => [...prev, ...newPreviews]);
     }
   };
