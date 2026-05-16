@@ -6,8 +6,63 @@ import { Save, Loader2, ImagePlus, X } from 'lucide-react';
 import { getHomepageSettings, updateHomepageSettings } from '@/app/actions/homepage';
 import Image from 'next/image';
 
+// --- MESIN KOMPRESOR OTOMATIS (Sistem Antre Client-Side) ---
+const compressImage = async (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = document.createElement('img');
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        // Batasi resolusi maksimal ke Full HD (1920x1080)
+        const MAX_WIDTH = 1920; 
+        const MAX_HEIGHT = 1080;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round(height * MAX_WIDTH / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round(width * MAX_HEIGHT / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Kompres menjadi JPEG dengan kualitas 80%
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newFileName = file.name.replace(/\.[^/.]+$/, ".jpg");
+            const newFile = new File([blob], newFileName, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          } else {
+            resolve(file); // Kembalikan file asli jika error
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+// ----------------------------------------------
+
 export default function ManageHomepage() {
   const [loading, setLoading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
   
   // State Gambar Lama & Gambar Baru
@@ -28,12 +83,29 @@ export default function ManageHomepage() {
     });
   }, []);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Upload + Kompresi Antre
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      setNewImageFiles(prev => [...prev, ...files]);
-      const previews = files.map(file => URL.createObjectURL(file));
+      setIsCompressing(true); // Indikator sedang mengompres
+
+      const compressedFiles: File[] = [];
+      
+      // SISTEM ANTRE: Proses kompresi satu per satu agar RAM tidak jebol
+      for (const file of files) {
+        if (file.size < 1024 * 1024) {
+          compressedFiles.push(file); // Jika < 1MB, biarkan saja
+        } else {
+          const compressed = await compressImage(file);
+          compressedFiles.push(compressed);
+        }
+      }
+
+      setNewImageFiles(prev => [...prev, ...compressedFiles]);
+      const previews = compressedFiles.map(file => URL.createObjectURL(file));
       setNewImagePreviews(prev => [...prev, ...previews]);
+      
+      setIsCompressing(false); // Kompresi selesai
     }
   };
 
@@ -105,10 +177,19 @@ export default function ManageHomepage() {
             ))}
             
             {/* Tombol Tambah Gambar */}
-            <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-gray-300 rounded-lg hover:border-black cursor-pointer bg-gray-50 transition-colors">
-              <ImagePlus className="text-gray-400 mb-2" size={32} />
-              <span className="text-gray-500 text-sm">Tambah Gambar</span>
-              <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
+            <label className={`flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-gray-300 rounded-lg hover:border-black cursor-pointer bg-gray-50 transition-colors ${isCompressing ? 'opacity-50 pointer-events-none' : ''}`}>
+              {isCompressing ? (
+                <>
+                  <Loader2 className="animate-spin text-gray-400 mb-2" size={32} />
+                  <span className="text-gray-500 text-xs text-center px-2">Memproses...</span>
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="text-gray-400 mb-2" size={32} />
+                  <span className="text-gray-500 text-sm">Tambah Gambar</span>
+                </>
+              )}
+              <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} disabled={isCompressing} />
             </label>
           </div>
         </div>
@@ -135,7 +216,7 @@ export default function ManageHomepage() {
           </div>
         </div>
 
-        <button type="submit" disabled={loading} className="bg-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-gray-800 disabled:bg-gray-400 transition-all mt-4 w-max px-10">
+        <button type="submit" disabled={loading || isCompressing} className="bg-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-gray-800 disabled:bg-gray-400 transition-all mt-4 w-max px-10">
           {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />}
           {loading ? 'Menyimpan...' : 'Simpan Pengaturan'}
         </button>
