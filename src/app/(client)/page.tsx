@@ -1,19 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+// 1. KITA HAPUS FRAMER MOTION DARI SINI
 import Image from 'next/image';
 import { getHomepageSettings } from '@/app/actions/homepage';
 
 export default function HomePage() {
-  // Default fallback jika database masih kosong
   const [images, setImages] = useState<string[]>([
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop"
   ]);
   const [delay, setDelay] = useState(3000);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Mengambil gambar dari Database
   useEffect(() => {
     getHomepageSettings().then(res => {
       if (res.success && res.data) {
@@ -27,9 +25,8 @@ export default function HomePage() {
     });
   }, []);
 
-  // Mesin penggerak Slider Otomatis
   useEffect(() => {
-    if (images.length <= 1) return; // Jangan jalan kalau gambar cuma 1
+    if (images.length <= 1) return;
     
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -39,27 +36,30 @@ export default function HomePage() {
   }, [images, delay]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-white">
+    <div className="relative w-full h-screen overflow-hidden bg-white flex items-center justify-center lg:justify-start">
       
-      {/* Watermark "N" Raksasa */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        className="absolute left-[8%] bottom-[-8%] text-[500px] font-bold text-[#F5F5F5] select-none -z-10 leading-none"
+      {/* Watermark "N" Raksasa (Diganti jadi div biasa, efeknya tetap sama) */}
+      <div 
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:top-auto lg:bottom-[-50px] lg:left-[45%] lg:translate-y-0 text-[350px] md:text-[400px] lg:text-[600px] xl:text-[700px] font-bold text-[#F5F5F5] select-none z-0 leading-none tracking-tighter animate-pulse"
       >
         N
-      </motion.div>
+      </div>
 
-      {/* Gambar Hero Kanan (Crossfade Animation) */}
-      <div className="absolute right-0 top-0 w-[60%] h-full bg-gray-50">
+      {/* Gambar Hero (Efek transisi dipindah ke Tailwind murni) */}
+      <div className="absolute 
+        /* --- SETTINGAN MOBILE (HP) --- */
+        left-6 right-6 top-[120px] bottom-[100px] h-auto w-auto rounded-lg
+        /* --- SETTINGAN DESKTOP (LAPTOP) --- */
+        lg:left-auto lg:right-10 xl:right-16 lg:top-12 xl:top-16 lg:bottom-12 xl:bottom-16 lg:h-auto lg:w-[55%] lg:rounded-none
+        z-10 shadow-2xl overflow-hidden bg-gray-50"
+      >
         {images.map((img, index) => (
-          <motion.div
+          <div
             key={`${img}-${index}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: index === currentIndex ? 1 : 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }} // Transisi pudar 1.5 detik yang elegan
-            className="absolute inset-0 w-full h-full"
+            // 2. INI KUNCI ANIMASI MURNI TAILWIND (Tanpa Framer Motion)
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+              index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
           >
             <Image 
               src={img}
@@ -67,9 +67,9 @@ export default function HomePage() {
               fill
               className="object-cover object-center"
               priority={index === 0}
-              sizes="60vw"
+              sizes="(max-width: 1024px) 100vw, 60vw"
             />
-          </motion.div>
+          </div>
         ))}
       </div>
 
