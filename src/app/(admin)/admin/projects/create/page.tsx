@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/app/actions/projects';
 
-// --- MESIN KOMPRESOR OTOMATIS (Client-Side) ---
+// --- MESIN KOMPRESOR SILUMAN (Sistem Antre Client-Side agar File Jumbo Jadi Ringan) ---
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -18,8 +18,7 @@ const compressImage = async (file: File): Promise<File> => {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        // Batasi resolusi maksimal ke Full HD (1920x1080) agar file kecil tapi tetap tajam
-        const MAX_WIDTH = 1920; 
+        const MAX_WIDTH = 1920; // Resolusi Full HD agar tetap tajam di layar gila sekalipun
         const MAX_HEIGHT = 1080;
         let width = img.width;
         let height = img.height;
@@ -41,10 +40,8 @@ const compressImage = async (file: File): Promise<File> => {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
-        // Kompres menjadi JPEG dengan kualitas 80% (Sangat optimal untuk web)
         canvas.toBlob((blob) => {
           if (blob) {
-            // Ubah ekstensi file asli menjadi .jpg
             const newFileName = file.name.replace(/\.[^/.]+$/, ".jpg");
             const newFile = new File([blob], newFileName, {
               type: 'image/jpeg',
@@ -52,40 +49,49 @@ const compressImage = async (file: File): Promise<File> => {
             });
             resolve(newFile);
           } else {
-            resolve(file); // Jika gagal kompres, kembalikan file asli agar tidak error
+            resolve(file);
           }
-        }, 'image/jpeg', 0.8);
+        }, 'image/jpeg', 0.85); // Kualitas 85% sangat optimal untuk detail arsitektur
       };
       img.onerror = () => resolve(file);
     };
     reader.onerror = () => resolve(file);
   });
 };
-// ----------------------------------------------
+// -------------------------------------------------------------------------------------
 
 export default function CreateProjectPage() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const router = useRouter();
 
-  // Handle Multi-Upload & Limit maksimal 5 gambar + KOMPRESI OTOMATIS
+  // Handle Multi-Upload Tanpa Batasan Jumlah Gambar (Unlimited)
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
-    if (imageFiles.length + files.length > 5) {
-      alert("Maksimal 5 gambar yang diperbolehkan!");
-      return;
-    }
-
     if (files.length > 0) {
-      // Jalankan proses kompresi secara paralel untuk semua gambar yang dipilih
-      const compressedFiles = await Promise.all(files.map(file => compressImage(file)));
+      setIsCompressing(true); // Hidupkan loading optimasi gambar
 
-      // Simpan file yang SUDAH DIKOMPRES ke dalam state
+      const compressedFiles: File[] = [];
+      
+      // SISTEM ANTREAN: Diproses satu per satu agar RAM laptop klien tidak jebol
+      for (const file of files) {
+        if (file.size < 500 * 1024) {
+          // Jika ukuran file bawaan sudah di bawah 500KB, tidak perlu dikompres lagi
+          compressedFiles.push(file);
+        } else {
+          const compressed = await compressImage(file);
+          compressedFiles.push(compressed);
+        }
+      }
+
       setImageFiles(prev => [...prev, ...compressedFiles]);
       const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
       setPreviewImages(prev => [...prev, ...newPreviews]);
+      
+      setIsCompressing(false); // Matikan loading optimasi
     }
   };
 
@@ -134,7 +140,7 @@ export default function CreateProjectPage() {
         
         {/* KOLOM KIRI: MULTI IMAGE UPLOAD */}
         <div className="lg:col-span-1 flex flex-col gap-4">
-          <label className="font-semibold text-arch-black">Project Images (Max 5)</label>
+          <label className="font-semibold text-arch-black">Project Images</label>
           <div className="grid grid-cols-2 gap-4">
             
             {/* Preview Gambar yang sudah dipilih */}
@@ -152,19 +158,26 @@ export default function CreateProjectPage() {
               </div>
             ))}
 
-            {/* Tombol Add Image */}
-            {previewImages.length < 5 && (
-              <label className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-arch-black cursor-pointer bg-gray-50 transition-colors ${previewImages.length === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-[3/4]'}`}>
-                <Upload size={24} className="text-arch-grayMenu mb-2" />
-                <span className="text-arch-grayMenu text-[12px]">Upload</span>
-                <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            )}
+            {/* Tombol Add Image - Sekarang selalu muncul tanpa batasan angka 5 */}
+            <label className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-arch-black cursor-pointer bg-gray-50 transition-colors ${previewImages.length === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-[3/4]'} ${isCompressing ? 'opacity-50 pointer-events-none' : ''}`}>
+              {isCompressing ? (
+                <>
+                  <Loader2 className="animate-spin text-arch-grayMenu mb-2" size={24} />
+                  <span className="text-arch-grayMenu text-[11px] text-center px-1">Optimizing...</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={24} className="text-arch-grayMenu mb-2" />
+                  <span className="text-arch-grayMenu text-[12px]">Upload</span>
+                </>
+              )}
+              <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} disabled={isCompressing} />
+            </label>
 
           </div>
         </div>
 
-        {/* KOLOM KANAN: FORM INPUT DATA (Sama seperti sebelumnya) */}
+        {/* KOLOM KANAN: FORM INPUT DATA */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">Project Title</label>
@@ -244,9 +257,9 @@ export default function CreateProjectPage() {
             <textarea name="description" rows={5} required className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-arch-black resize-none" />
           </div>
 
-          <button type="submit" disabled={loading} className="bg-arch-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-opacity-90 disabled:bg-gray-400 transition-all mt-4">
+          <button type="submit" disabled={loading || isCompressing} className="bg-arch-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-opacity-90 disabled:bg-gray-400 transition-all mt-4">
             {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />}
-            {loading ? 'Menyimpan Semua Gambar...' : 'Save Project'}
+            {loading ? 'Saving Project Content & Images...' : 'Save Project'}
           </button>
         </div>
       </form>

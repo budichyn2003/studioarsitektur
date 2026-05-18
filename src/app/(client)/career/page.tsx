@@ -1,66 +1,67 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { Calendar } from "lucide-react";
+import Image from "next/image";
 
-export default async function CareerListPage() {
-  // Hanya ambil lowongan yang sedang aktif
-  const careers = await prisma.career.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: 'desc' },
+export default async function NewsListPage() {
+  const newsList = await prisma.news.findMany({
+    orderBy: { publishDate: 'desc' },
   });
 
   return (
-    // Menambahkan padding kiri untuk konsistensi jarak dengan Sidebar
-    <div className="w-full min-h-screen pt-16 pb-24 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col">
-      {/* Header */}
-      <h1 className="text-black text-[32px] md:text-[40px] font-medium mb-4 tracking-tight">
-        Join Our Team
-      </h1>
-      <p className="text-[#777777] text-[16px] max-w-2xl mb-16 leading-relaxed">
-        We are always looking for talented individuals who are passionate about architecture and design. Explore our open positions below.
-      </p>
+    <div className="w-full min-h-screen pt-16 pb-24 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-12">
+      <div>
+        <h1 className="text-black text-[32px] md:text-[40px] font-medium mb-12 tracking-tight uppercase">
+          Latest News
+        </h1>
 
-      {/* Grid Layout 2 Kolom */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
-        {careers.map((career) => {
-          // Mengambil sedikit bagian dari deskripsi untuk preview
-          const excerpt = career.description.length > 140 
-            ? career.description.substring(0, 140) + '...' 
-            : career.description;
+        <div className="flex flex-col gap-6 w-full max-w-4xl">
+          {newsList.map((news) => {
+            const formattedYear = new Date(news.publishDate).getFullYear();
+            const excerpt = news.contentId ? news.contentId.substring(0, 180) + '...' : 'No content available.';
 
-          return (
-            <Link 
-              key={career.id} 
-              href={`/career/${career.id}`} 
-              className="group w-full bg-white border border-gray-200 rounded-2xl p-8 flex flex-col justify-between gap-6 hover:shadow-lg transition-shadow duration-300 min-h-[240px]"
-            >
-              <div className="flex flex-col gap-4">
-                <h2 className="text-black text-[22px] font-normal tracking-tight group-hover:text-gray-600 transition-colors">
-                  {career.title}
+            return (
+              <div key={news.id} className="w-full bg-white border border-gray-200 rounded-sm p-8 flex flex-col gap-4 hover:border-black transition-colors duration-300">
+                
+                <div className="flex items-center gap-2 text-[#999999] text-[13px]">
+                  <Calendar size={16} />
+                  <span>{formattedYear}</span>
+                </div>
+                
+                <h2 className="text-black text-[22px] md:text-[26px] font-medium tracking-tight uppercase">
+                  {news.title}
                 </h2>
-                <p className="text-[#999999] text-[14px] leading-[1.8] line-clamp-3">
+                
+                <p className="text-[#555555] text-[15px] leading-relaxed line-clamp-2 text-justify">
                   {excerpt}
                 </p>
+                
+                <Link href={`/news/${news.id}`} className="text-[#999999] hover:text-black text-[12px] mt-2 transition-colors w-max uppercase tracking-widest font-medium">
+                  Read More
+                </Link>
               </div>
-              
-              {/* Tag / Badge Pill Sesuai Desain */}
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                <span className="px-5 py-1.5 border border-gray-300 rounded-full text-[13px] text-black whitespace-nowrap">
-                  {career.type}
-                </span>
-                <span className="px-5 py-1.5 border border-gray-300 rounded-full text-[13px] text-black whitespace-nowrap">
-                  {career.location}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
+            );
+          })}
+
+          {newsList.length === 0 && (
+            <p className="text-[#999999] py-10 text-[15px]">No news published yet.</p>
+          )}
+        </div>
       </div>
 
-      {careers.length === 0 && (
-        <div className="p-12 text-center bg-gray-50 rounded-2xl border border-gray-200 w-full max-w-5xl">
-          <p className="text-[#777777] text-[16px]">Saat ini tidak ada lowongan yang terbuka. Silakan cek kembali nanti!</p>
+      {/* REVISI LAYOUT: BANNER LANDSCAPE BAWAH SECTION NEWS */}
+      <div className="w-full max-w-4xl mt-4">
+        <div className="relative w-full aspect-[21/9] md:aspect-[3/1] rounded-sm overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
+          <Image
+            src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format&fit=crop"
+            alt="News Section Bottom Banner"
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 1024px) 100vw, 80vw"
+          />
         </div>
-      )}
+      </div>
+
     </div>
   );
 }

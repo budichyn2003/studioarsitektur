@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, use } from 'react';
 import { ArrowLeft, Upload, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,7 +8,10 @@ import { useRouter } from 'next/navigation';
 import { updateProject, getProject } from '@/app/actions/projects';
 
 export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
-  const [projectId, setProjectId] = useState('');
+  // Menggunakan 'use' untuk unwrap Promise params (Standar Next.js 15)
+  const resolvedParams = use(params);
+  const projectId = resolvedParams.id;
+  
   const [projectData, setProjectData] = useState<any>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -17,16 +19,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
 
   useEffect(() => {
-    params.then(p => {
-      setProjectId(p.id);
-      getProject(p.id).then(data => {
-        setProjectData(data);
-        if (data?.images?.[0]?.url) {
-          setPreviewImage(data.images[0].url);
-        }
-      });
+    getProject(projectId).then(data => {
+      setProjectData(data);
+      if (data?.images?.[0]?.url) {
+        setPreviewImage(data.images[0].url);
+      }
     });
-  }, [params]);
+  }, [projectId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,7 +58,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const formattedDate = projectData.projectDate ? new Date(projectData.projectDate).toISOString().split('T')[0] : '';
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-5xl flex flex-col gap-8">
+    <div className="w-full max-w-5xl flex flex-col gap-8 pb-20">
       <div className="flex items-center gap-4">
         <Link href="/admin/projects" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowLeft size={24} />
@@ -115,7 +114,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          {/* GRID DATA BARU */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-dashed border-gray-200 pt-6 mt-2">
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Build Year</label>
@@ -176,6 +174,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           </button>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

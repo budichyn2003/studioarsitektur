@@ -19,7 +19,7 @@ model Project {
   slug          String          @unique
   title         String
   category      ProjectCategory
-  location      String          // <--- Ini location yang asli, kita pertahankan
+  location      String          
   architect     String?
   photographer  String?
   interior      String?
@@ -30,14 +30,13 @@ model Project {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   
-  // --- TAMBAHAN FIELD BARU SESUAI DESAIN UI ---
-  buildYear         String?  // Tahun Terbangun / Terdesign
-  status            String?  // misal: "Build" atau "Design"
+  buildYear         String?
+  status            String?
   architectInCharge String?  
-  drafter           String?  
-  siteArea          String?  // misal: "120 m2"
-  constructedArea   String?  // misal: "200 m2"
-  collaborate       String?  
+  drafter           String?
+  siteArea          String?  
+  constructedArea   String?
+  collaborate       String?
   photographs       String?  
 }
 
@@ -61,7 +60,7 @@ model News {
   thumbnailUrl  String?
   externalLink  String?
   publishDate   DateTime 
-  author        String?  // <--- TAMBAHAN UNTUK PENULIS
+  author        String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -69,12 +68,12 @@ model News {
 model Career {
   id           String   @id @default(uuid())
   slug         String   @unique
-  title        String   // Nama posisi (ex: Junior Architect)
-  location     String   // Lokasi kerja (ex: Jakarta, Indonesia)
-  type         String   // Full-Time, Part-Time, Internship
+  title        String   
+  location     String   
+  type         String   
   description  String   @db.Text
   requirements String   @db.Text
-  isActive     Boolean  @default(true) // Untuk mematikan/menyalakan lowongan
+  isActive     Boolean  @default(true) 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -82,9 +81,34 @@ model Career {
 model HomepageSetting {
   id            String   @id @default(uuid())
   title         String   @default("Main Homepage")
-  imageUrls     String[] // Menyimpan banyak URL gambar sekaligus (Array)
-  delayTimer    Int      @default(3000) // Waktu delay antar gambar (dalam milidetik)
-  showAboutHero Boolean  @default(false) // <--- SAKLAR ABOUT US
+  imageUrls     String[] 
+  delayTimer    Int      @default(3000) 
+  showAboutHero Boolean  @default(false) 
   isActive      Boolean  @default(true)
   updatedAt     DateTime @updatedAt
+}
+
+// ==========================================
+// TAMBAHAN FIELD BARU REVISI CLIENT (CMS)
+// ==========================================
+
+model AboutSetting {
+  id         String   @id @default(uuid())
+  title      String   @default("ABOUT US")
+  content    String   @db.Text
+  showHero   Boolean  @default(true)
+  heroUrl    String   @default("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop")
+  thumbnails String[] // Menyimpan 4 array url gambar thumbnail koleksi bawah
+  updatedAt  DateTime @updatedAt
+}
+
+model ContactSetting {
+  id          String   @id @default(uuid())
+  headline    String   @default("Let's discuss \nyour next project.")
+  subheadline String   @db.Text
+  email       String   @default("hello@architecture.com")
+  phone       String   @default("+62 812 3456 7890")
+  address     String   @default("Jl. Sudirman No. 123, Jakarta Selatan, Indonesia 12190")
+  bannerUrl   String   @default("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop")
+  updatedAt   DateTime @updatedAt
 }
