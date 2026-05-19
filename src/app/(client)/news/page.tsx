@@ -7,6 +7,8 @@ export default async function NewsListPage() {
   const newsList = await prisma.news.findMany({
     orderBy: { publishDate: 'desc' },
   });
+  let newsSetting = await prisma.newsSetting.findFirst();
+  if (!newsSetting) newsSetting = await prisma.newsSetting.create({ data: {} });
 
   return (
     <div className="w-full min-h-screen pt-16 pb-24 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-12">
@@ -52,13 +54,7 @@ export default async function NewsListPage() {
       {/* REVISI LAYOUT: BANNER LANDSCAPE BAWAH SECTION NEWS */}
       <div className="w-full max-w-4xl mt-4">
         <div className="relative w-full aspect-[21/9] md:aspect-[3/1] rounded-sm overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
-          <Image
-            src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format&fit=crop"
-            alt="News Section Bottom Banner"
-            fill
-            className="object-cover object-center"
-            sizes="(max-width: 1024px) 100vw, 80vw"
-          />
+          <Image src={newsSetting.bannerUrl} alt="News Banner" fill className="object-cover object-center" sizes="(max-width: 1024px) 100vw, 80vw" />
         </div>
       </div>
 

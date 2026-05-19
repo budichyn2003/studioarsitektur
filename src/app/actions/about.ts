@@ -1,29 +1,70 @@
 'use server';
 
 import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
+import { revalidatePath } from "next/cache";
 
 export async function getAboutSettings() {
   try {
     let setting = await prisma.aboutSetting.findFirst();
-    
-    // Anti-Error Fallback: Jika admin belum pernah set, otomatis buat baris pertama
     if (!setting) {
       setting = await prisma.aboutSetting.create({
         data: {
           title: "ABOUT US",
-          content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+          content: "Lorem ipsum dolor sit amet...",
           showHero: true,
           heroUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop",
-          thumbnails: [
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop&sig=1',
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop&sig=2',
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop&sig=3',
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop&sig=4'
-          ]
+          thumbnails: []
         }
       });
     }
     return { success: true, data: setting };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateAboutSettings(formData: FormData) {
+  try {
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const showHero = formData.get('showHero') === 'true';
+
+    let heroUrl = formData.get('existingHeroUrl') as string;
+    const heroImage = formData.get('heroImage') as File | null;
+
+    if (heroImage && heroImage.size > 0) {
+      const fileName = `about-hero-${Date.now()}.${heroImage.name.split('.').pop()}`;
+      const { error } = await supabase.storage.from('project-images').upload(fileName, heroImage);
+      if (!error) {
+        heroUrl = supabase.storage.from('project-images').getPublicUrl(fileName).data.publicUrl;
+      }
+    }
+
+    let thumbnails = JSON.parse(formData.get('existingThumbnails') as string || '[]');
+    const thumbnailFiles = formData.getAll('thumbnails') as File[];
+    const validThumbs = thumbnailFiles.filter(f => f.size > 0);
+
+    if (validThumbs.length > 0) {
+      const newThumbs = await Promise.all(validThumbs.map(async (file, idx) => {
+        const fileName = `about-thumb-${Date.now()}-${idx}.${file.name.split('.').pop()}`;
+        await supabase.storage.from('project-images').upload(fileName, file);
+        return supabase.storage.from('project-images').getPublicUrl(fileName).data.publicUrl;
+      }));
+      thumbnails = newThumbs; 
+    }
+
+    const setting = await prisma.aboutSetting.findFirst();
+    if (setting) {
+      await prisma.aboutSetting.update({
+        where: { id: setting.id },
+        data: { title, content, showHero, heroUrl, thumbnails }
+      });
+    }
+
+    revalidatePath('/about-us');
+    revalidatePath('/admin/about');
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

@@ -8,7 +8,9 @@ import {
   Newspaper,
   Briefcase,
   LogOut,
-  Home // <-- Tambahkan icon Home
+  Home,
+  Info,
+  Mail
 } from 'lucide-react';
 
 import { logoutAdmin } from '@/app/actions/auth';
@@ -29,28 +31,50 @@ export default function AdminSidebar() {
       path: '/admin',
       icon: <LayoutDashboard size={20} />
     },
-    // --- MENU BARU KITA ---
+
     {
       name: 'Manage Homepage',
       path: '/admin/homepage',
-      icon: <Home size={20} /> 
+      icon: <Home size={20} />
     },
-    // ----------------------
+
     {
       name: 'Manage Projects',
       path: '/admin/projects',
       icon: <FolderKanban size={20} />
     },
+
     {
       name: 'Manage News',
       path: '/admin/news',
       icon: <Newspaper size={20} />
     },
+
     {
       name: 'Manage Careers',
       path: '/admin/careers',
       icon: <Briefcase size={20} />
     },
+
+    // --- MENU BARU ---
+    {
+      name: 'Manage About Us',
+      path: '/admin/about',
+      icon: <Info size={20} />
+    },
+
+    {
+      name: 'Manage Contact',
+      path: '/admin/contact',
+      icon: <Mail size={20} />
+    },
+
+    {
+      name: 'Manage Banners',
+      path: '/admin/banners',
+      icon: <LayoutDashboard size={20} />
+    },
+    // -----------------
   ];
 
   return (
@@ -76,8 +100,6 @@ export default function AdminSidebar() {
       {/* Menu Navigasi Admin */}
       <nav className="flex flex-col gap-2 flex-grow">
         {adminMenu.map((item) => {
-          // Highlight menu aktif
-          // (Cek exact match untuk dashboard, includes untuk yang lain)
           const isActive =
             item.path === '/admin'
               ? pathname === '/admin'
