@@ -69,3 +69,79 @@ export async function updateAboutSettings(formData: FormData) {
     return { success: false, error: error.message };
   }
 }
+
+// ==========================================
+// CRUD TEAM MEMBERS
+// ==========================================
+export async function getTeamMembers() {
+  try {
+    const data = await prisma.teamMember.findMany({ orderBy: { createdAt: 'asc' } });
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function addTeamMember(formData: FormData) {
+  try {
+    const name = formData.get('name') as string;
+    const role = formData.get('role') as string;
+    const image = formData.get('image') as File;
+    let imageUrl = '';
+
+    if (image && image.size > 0) {
+      const fileName = `team-${Date.now()}.${image.name.split('.').pop()}`;
+      const { error } = await supabase.storage.from('project-images').upload(fileName, image);
+      if (!error) imageUrl = supabase.storage.from('project-images').getPublicUrl(fileName).data.publicUrl;
+    }
+
+    await prisma.teamMember.create({ data: { name, role, imageUrl } });
+    revalidatePath('/about-us');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTeamMember(id: string) {
+  try {
+    await prisma.teamMember.delete({ where: { id } });
+    revalidatePath('/about-us');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ==========================================
+// CRUD FORMER MEMBERS
+// ==========================================
+export async function getFormerMembers() {
+  try {
+    const data = await prisma.formerMember.findMany({ orderBy: { createdAt: 'asc' } });
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function addFormerMember(formData: FormData) {
+  try {
+    const name = formData.get('name') as string;
+    await prisma.formerMember.create({ data: { name } });
+    revalidatePath('/about-us');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteFormerMember(id: string) {
+  try {
+    await prisma.formerMember.delete({ where: { id } });
+    revalidatePath('/about-us');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
