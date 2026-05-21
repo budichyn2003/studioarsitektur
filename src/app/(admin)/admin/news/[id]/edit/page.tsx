@@ -10,23 +10,30 @@ import { updateNews, getNewsById } from '@/app/actions/news';
 export default function EditNewsPage({ params }: { params: Promise<{ id: string }> }) {
   const [newsId, setNewsId] = useState('');
   const [newsData, setNewsData] = useState<any>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null); // State penyimpan file!
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     params.then(p => {
       setNewsId(p.id);
-      getNewsById(p.id).then(data => setNewsData(data));
+      getNewsById(p.id).then(data => {
+        setNewsData(data);
+        if (data && data.imageUrls) setPreviewImages(data.imageUrls);
+        else if (data && data.thumbnailUrl) setPreviewImages([data.thumbnailUrl]);
+      });
     });
   }, [params]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file); // Simpan ke state
-      setPreviewImage(URL.createObjectURL(file));
+  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const filesArray = Array.from(files);
+      setImageFiles(filesArray);
+      
+      const previews = filesArray.map(file => URL.createObjectURL(file));
+      setPreviewImages(previews);
     }
   };
 
@@ -35,10 +42,11 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    // Selipkan kembali gambar baru jika admin mengubahnya
-    if (imageFile) {
-      formData.set('image', imageFile);
-    }
+    formData.delete('images');
+    imageFiles.forEach(file => {
+      formData.append('images', file);
+    });
+    formData.append('existingImageUrls', JSON.stringify(newsData?.imageUrls || []));
 
     const result = await updateNews(newsId, formData);
     if (result.success) {
@@ -53,7 +61,6 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
   if (!newsData) return <div className="p-8 mt-20 text-center">Memuat Data Berita...</div>;
 
   const formattedDate = newsData.publishDate ? new Date(newsData.publishDate).toISOString().split('T')[0] : '';
-  const displayImage = previewImage || newsData.thumbnailUrl;
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-5xl flex flex-col gap-8">
@@ -66,25 +73,25 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         <input type="hidden" name="existingImage" value={newsData.thumbnailUrl || 'null'} />
 
         <div className="lg:col-span-1 flex flex-col gap-4">
-          <label className="font-semibold text-arch-black">Update Thumbnail</label>
-          <div className="relative w-full aspect-video border-2 border-dashed rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-white cursor-pointer group hover:border-arch-black">
-            {displayImage ? (
-              <>
-                <img src={displayImage} alt="Preview" className="w-full h-full object-cover" />
-                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity">
-                  <Upload size={32} className="text-white mb-2" />
-                  <span className="text-white text-[14px]">Ganti Gambar</span>
-                  <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" />
-                </label>
-              </>
-            ) : (
-              <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-4">
-                <Upload size={40} className="text-arch-grayMenu mb-2" />
-                <span className="text-arch-grayMenu text-[14px]">Upload New Image</span>
-                <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" />
-              </label>
-            )}
+          <label className="font-semibold text-arch-black">Ganti / Perbarui Koleksi Foto</label>
+          <div className="relative w-full min-h-[140px] border-2 border-dashed rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-white cursor-pointer group hover:border-arch-black p-4 text-center">
+            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
+              <Upload size={32} className="text-arch-grayMenu mb-1" />
+              <span className="text-arch-grayMenu text-[13px]">Upload Foto-Foto Baru</span>
+              <input type="file" name="images" multiple className="hidden" onChange={handleImagesChange} accept="image/*" />
+            </label>
           </div>
+
+          {/* Row Preview Foto */}
+          {previewImages.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {previewImages.map((src, index) => (
+                <div key={index} className="relative aspect-square border rounded-lg overflow-hidden bg-gray-50">
+                  <img src={src} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border shadow-sm flex flex-col gap-6">

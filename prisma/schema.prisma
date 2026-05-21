@@ -52,17 +52,18 @@ model ProjectImage {
 }
 
 model News {
-  id            String   @id @default(uuid())
-  slug          String   @unique
-  title         String
-  contentEn     String?  @db.Text
-  contentId     String?  @db.Text
-  thumbnailUrl  String?
-  externalLink  String?
-  publishDate   DateTime 
-  author        String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id            String   @id @default(uuid()) [cite: 10]
+  slug          String   @unique [cite: 10]
+  title         String [cite: 10]
+  contentEn     String?  @db.Text [cite: 10, 11]
+  contentId     String?  @db.Text [cite: 11]
+  thumbnailUrl  String? [cite: 11]
+  imageUrls     String[] // TAMBAHAN REVISI: Untuk mendukung multiple images
+  externalLink  String? [cite: 11]
+  publishDate   DateTime [cite: 12]
+  author        String? [cite: 12]
+  createdAt     DateTime @default(now()) [cite: 13]
+  updatedAt     DateTime @updatedAt [cite: 13]
 }
 
 model Career {

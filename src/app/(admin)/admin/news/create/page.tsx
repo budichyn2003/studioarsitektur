@@ -8,16 +8,19 @@ import { useRouter } from 'next/navigation';
 import { createNews } from '@/app/actions/news';
 
 export default function CreateNewsPage() {
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null); // State penyimpan file!
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file); // Simpan ke state agar tidak menguap
-      setPreviewImage(URL.createObjectURL(file));
+  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const filesArray = Array.from(files);
+      setImageFiles(filesArray);
+      
+      const previews = filesArray.map(file => URL.createObjectURL(file));
+      setPreviewImages(previews);
     }
   };
 
@@ -25,12 +28,11 @@ export default function CreateNewsPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Ambil data form
     const formData = new FormData(e.currentTarget);
-    // Selipkan kembali gambar dari state secara manual!
-    if (imageFile) {
-      formData.set('image', imageFile);
-    }
+    formData.delete('images'); // Bersihkan instansi lama
+    imageFiles.forEach(file => {
+      formData.append('images', file);
+    });
 
     const result = await createNews(formData);
     
@@ -52,25 +54,25 @@ export default function CreateNewsPage() {
 
       <form className="grid grid-cols-1 lg:grid-cols-3 gap-8" onSubmit={handleSubmit}>
         <div className="lg:col-span-1 flex flex-col gap-4">
-          <label className="font-semibold text-arch-black">News Thumbnail</label>
-          <div className="relative w-full aspect-video border-2 border-dashed border-gray-300 rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-white cursor-pointer hover:border-arch-black group">
-            {previewImage ? (
-              <>
-                <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
-                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity">
-                  <Upload size={32} className="text-white mb-2" />
-                  <span className="text-white text-[14px]">Ganti Gambar</span>
-                  <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" />
-                </label>
-              </>
-            ) : (
-              <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-4">
-                <Upload size={40} className="text-arch-grayMenu mb-2" />
-                <span className="text-arch-grayMenu text-[14px]">Upload Image</span>
-                <input type="file" name="image" className="hidden" onChange={handleImageChange} accept="image/*" required />
-              </label>
-            )}
+          <label className="font-semibold text-arch-black">Upload Images (Mendukung Banyak Foto)</label>
+          <div className="relative w-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-white cursor-pointer hover:border-arch-black p-4 text-center">
+            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
+              <Upload size={36} className="text-arch-grayMenu mb-2" />
+              <span className="text-arch-grayMenu text-[14px]">Pilih File Foto</span>
+              <input type="file" name="images" multiple className="hidden" onChange={handleImagesChange} accept="image/*" required />
+            </label>
           </div>
+
+          {/* Preview Kumpulan File Foto */}
+          {previewImages.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {previewImages.map((src, index) => (
+                <div key={index} className="relative aspect-square border rounded-lg overflow-hidden bg-gray-50">
+                  <img src={src} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border shadow-sm flex flex-col gap-6">

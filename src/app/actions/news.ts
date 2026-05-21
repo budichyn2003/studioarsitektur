@@ -10,20 +10,30 @@ export async function createNews(formData: FormData) {
     const author = formData.get('author') as string;
     const publishDate = formData.get('publishDate') as string;
     const content = formData.get('content') as string;
-    const imageFile = formData.get('image') as File;
+    
+    // Mengambil semua file gambar yang diupload
+    const imageFiles = formData.getAll('images') as File[];
+    const imageUrls: string[] = [];
+    let thumbnailUrl: string | null = null;
 
-    let thumbnailUrl = null;
+    if (imageFiles && imageFiles.length > 0) {
+      for (const file of imageFiles) {
+        if (file.size > 0) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `news-${Date.now()}-${Math.floor(Math.random() * 10000)}.${fileExt}`;
+          
+          const { error } = await supabase.storage.from('project-images').upload(fileName, file);
+          if (error) throw new Error("Gagal mengupload gambar ke Supabase");
+          
+          const { data } = supabase.storage.from('project-images').getPublicUrl(fileName);
+          imageUrls.push(data.publicUrl);
+        }
+      }
+    }
 
-    // Pastikan file benar-benar ada dan dikirim
-    if (imageFile && imageFile.size > 0) {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `news-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-      
-      const { error } = await supabase.storage.from('project-images').upload(fileName, imageFile);
-      if (error) throw new Error("Gagal mengupload gambar ke Supabase");
-      
-      const { data } = supabase.storage.from('project-images').getPublicUrl(fileName);
-      thumbnailUrl = data.publicUrl;
+    // Gambar pertama otomatis dijadikan thumbnail utama
+    if (imageUrls.length > 0) {
+      thumbnailUrl = imageUrls[0];
     }
 
     await prisma.news.create({
@@ -33,7 +43,8 @@ export async function createNews(formData: FormData) {
         author: author || 'Admin',
         publishDate: publishDate ? new Date(publishDate) : new Date(),
         contentId: content,
-        thumbnailUrl, // Akan masuk ke database jika berhasil
+        thumbnailUrl,
+        imageUrls,
       },
     });
 
@@ -51,19 +62,27 @@ export async function updateNews(id: string, formData: FormData) {
     const author = formData.get('author') as string;
     const publishDate = formData.get('publishDate') as string;
     const content = formData.get('content') as string;
-    const imageFile = formData.get('image') as File;
-
+    
+    const newFiles = formData.getAll('images') as File[];
+    let existingUrls = JSON.parse(formData.get('existingImageUrls') as string || '[]');
     let thumbnailUrl = formData.get('existingImage') as string;
 
-    if (imageFile && imageFile.size > 0) {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `news-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-      
-      const { error } = await supabase.storage.from('project-images').upload(fileName, imageFile);
-      if (error) throw new Error("Gagal mengupload gambar baru ke Supabase");
-      
-      const { data } = supabase.storage.from('project-images').getPublicUrl(fileName);
-      thumbnailUrl = data.publicUrl;
+    if (newFiles && newFiles.length > 0 && newFiles[0].size > 0) {
+      const uploadedUrls: string[] = [];
+      for (const file of newFiles) {
+        if (file.size > 0) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `news-${Date.now()}-${Math.floor(Math.random() * 10000)}.${fileExt}`;
+          
+          const { error } = await supabase.storage.from('project-images').upload(fileName, file);
+          if (error) throw new Error("Gagal mengupload gambar baru ke Supabase");
+          
+          const { data } = supabase.storage.from('project-images').getPublicUrl(fileName);
+          uploadedUrls.push(data.publicUrl);
+        }
+      }
+      existingUrls = uploadedUrls; // Replace dengan koleksi foto baru
+      thumbnailUrl = uploadedUrls[0];
     }
 
     await prisma.news.update({
@@ -75,6 +94,7 @@ export async function updateNews(id: string, formData: FormData) {
         publishDate: publishDate ? new Date(publishDate) : undefined,
         contentId: content,
         thumbnailUrl: thumbnailUrl === 'null' ? null : thumbnailUrl,
+        imageUrls: existingUrls,
       },
     });
 
