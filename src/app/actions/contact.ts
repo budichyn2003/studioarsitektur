@@ -4,19 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
+// --- CONTACT SETTINGS ---
 export async function getContactSettings() {
   try {
     let setting = await prisma.contactSetting.findFirst();
     if (!setting) {
       setting = await prisma.contactSetting.create({
-        data: {
-          headline: "Let's discuss \nyour next project.",
-          subheadline: "We are always open to discussing new projects...",
-          email: "hello@architecture.com",
-          phone: "+62 812 3456 7890",
-          address: "Jl. Sudirman No. 123, Jakarta Selatan",
-          bannerUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop"
-        }
+        data: {}
       });
     }
     return { success: true, data: setting };
@@ -32,6 +26,7 @@ export async function updateContactSettings(formData: FormData) {
     const email = formData.get('email') as string;
     const phone = formData.get('phone') as string;
     const address = formData.get('address') as string;
+    const calendlyLink = formData.get('calendlyLink') as string;
 
     let bannerUrl = formData.get('existingBannerUrl') as string;
     const bannerImage = formData.get('bannerImage') as File | null;
@@ -48,12 +43,44 @@ export async function updateContactSettings(formData: FormData) {
     if (setting) {
       await prisma.contactSetting.update({
         where: { id: setting.id },
-        data: { headline, subheadline, email, phone, address, bannerUrl }
+        data: { headline, subheadline, email, phone, address, calendlyLink, bannerUrl }
       });
     }
 
     revalidatePath('/contact');
     revalidatePath('/admin/contact');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// --- SOCIAL MEDIA SETTINGS ---
+export async function getSocialMediaSettings() {
+  try {
+    let setting = await prisma.socialMediaSetting.findFirst();
+    if (!setting) setting = await prisma.socialMediaSetting.create({ data: {} });
+    return { success: true, data: setting };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateSocialMediaSettings(formData: FormData) {
+  try {
+    const instagram = formData.get('instagram') as string;
+    const youtube = formData.get('youtube') as string;
+    const linkedin = formData.get('linkedin') as string;
+
+    const setting = await prisma.socialMediaSetting.findFirst();
+    if (setting) {
+      await prisma.socialMediaSetting.update({
+        where: { id: setting.id },
+        data: { instagram, youtube, linkedin }
+      });
+    }
+
+    revalidatePath('/'); // Refresh layout yang ada sidebar-nya
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

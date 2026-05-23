@@ -12,7 +12,7 @@ export default function NewsListPage() {
   const itemsPerPage = 4;
 
   useEffect(() => {
-    // Ambil data langsung di client side agar pagination terasa smooth 1 viewport
+    // Fetch data ke endpoint API agar pagination berjalan mulus di client
     fetch('/api/news-client')
       .then(res => res.json())
       .then(data => {
@@ -21,57 +21,52 @@ export default function NewsListPage() {
       });
   }, []);
 
-  // Hitung kalkulasi index pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentNews = newsList.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(newsList.length / itemsPerPage);
 
   return (
-    // Dikunci h-[100dvh] overflow-hidden agar pas 1 layar monitor tanpa scroll vertikal
-    <div className="w-full h-[100dvh] overflow-hidden pt-20 pb-6 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col justify-between bg-white">
+    // PENTING: Dikunci h-[100dvh] overflow-hidden agar 100% pas 1 layar tanpa scroll
+    <div className="w-full h-[100dvh] overflow-hidden pt-24 pb-6 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col justify-between bg-white">
       
       <div className="flex flex-col flex-grow overflow-hidden">
+        
         {/* Typography judul tebal disamakan dengan About Us */}
         <h1 className="text-black text-[20px] font-bold tracking-[0.15em] uppercase mb-6 flex-shrink-0">
           Latest News
         </h1>
 
-        {/* Grid List Konten Berita (Compact Card Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full flex-grow overflow-hidden items-stretch">
+        {/* Grid List Card Berita
+          Revisi: Dibuat 2 kolom memanjang ke samping (horizontal).
+          Tanpa foto, card menjadi sangat tipis/compact.
+        */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-4 w-full flex-grow overflow-hidden content-start">
           {currentNews.map((news) => {
             const formattedYear = new Date(news.publishDate).getFullYear();
-            const excerpt = news.contentId ? news.contentId.substring(0, 90) + '...' : 'No content available.';
+            const excerpt = news.contentId ? news.contentId.substring(0, 120) + '...' : 'No content available.';
 
             return (
               <Link 
                 href={`/news/${news.id}`} 
                 key={news.id} 
-                className="group flex flex-col justify-between bg-white border border-gray-200 rounded-sm p-5 hover:border-black transition-colors duration-300 h-full max-h-[42vh]"
+                className="group flex flex-col justify-center bg-white border-b border-gray-100 pb-4 hover:border-black transition-colors duration-300 min-h-[100px] md:min-h-[120px]"
               >
-                <div className="flex flex-col gap-2 overflow-hidden">
-                  <div className="flex items-center gap-1.5 text-[#999999] text-[12px]">
-                    <Calendar size={13} />
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 text-[#999999] text-[11px] mb-1">
+                    <Calendar size={12} />
                     <span>{formattedYear}</span>
                   </div>
                   
-                  {/* Ukuran judul dibatasi tidak melebihi heading utama */}
-                  <h2 className="text-black text-[15px] font-semibold tracking-tight uppercase line-clamp-2 leading-tight group-hover:text-gray-600 transition-colors">
+                  {/* Judul dibatasi 1 baris, font lebih kecil dari "Latest News" */}
+                  <h2 className="text-black text-[15px] font-semibold tracking-tight uppercase line-clamp-1 leading-tight group-hover:text-gray-600 transition-colors">
                     {news.title}
                   </h2>
                   
-                  <p className="text-[#666666] text-[13px] leading-relaxed text-justify line-clamp-3">
+                  {/* Deskripsi memanjang ke samping */}
+                  <p className="text-[#777777] text-[13px] leading-relaxed text-justify line-clamp-2 pr-4">
                     {excerpt}
                   </p>
-                </div>
-                
-                {/* Gambar diletakkan di dalam/bawah card secara proporsional */}
-                <div className="relative w-full aspect-[16/10] mt-3 bg-gray-50 rounded-sm overflow-hidden border border-gray-100 flex-shrink-0">
-                  {news.thumbnailUrl ? (
-                    <img src={news.thumbnailUrl} alt={news.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[11px] text-gray-400">No Image</div>
-                  )}
                 </div>
               </Link>
             );
@@ -83,10 +78,10 @@ export default function NewsListPage() {
         </div>
       </div>
 
-      {/* Bagian Bawah: Navigasi Pagination & Banner Landscape Pendek */}
-      <div className="flex flex-col gap-4 mt-4 flex-shrink-0">
+      {/* Bagian Bawah: Navigasi Pagination & Banner Landscape Besar */}
+      <div className="flex flex-col gap-4 mt-2 flex-shrink-0">
         
-        {/* Tombol Kontrol Halaman (Hanya muncul jika item > 4) */}
+        {/* Tombol Kontrol Halaman */}
         {totalPages > 1 && (
           <div className="flex items-center justify-start gap-4 text-sm z-20">
             <button 
@@ -107,11 +102,20 @@ export default function NewsListPage() {
           </div>
         )}
 
-        {/* Banner Landscape Bagian Bawah */}
+        {/* REVISI BANNER BAWAH: Diperbesar sangat signifikan!
+          Tingginya (h-[200px] sd 30vh) membuatnya setara dengan gambar About Us, 
+          tapi berbentuk landscape / persegi panjang sempurna.
+        */}
         {bannerUrl && (
           <div className="w-full max-w-5xl">
-            <div className="relative w-full h-[60px] md:h-[80px] rounded-sm overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
-              <Image src={bannerUrl} alt="News Banner" fill className="object-cover object-center" sizes="80vw" />
+            <div className="relative w-full h-[180px] md:h-[220px] lg:h-[30vh] rounded-sm overflow-hidden bg-gray-50 border border-gray-100 shadow-sm mt-1">
+              <Image 
+                src={bannerUrl} 
+                alt="News Banner" 
+                fill 
+                className="object-cover object-center transition-transform hover:scale-105 duration-700" 
+                sizes="(max-width: 1024px) 100vw, 800px" 
+              />
             </div>
           </div>
         )}

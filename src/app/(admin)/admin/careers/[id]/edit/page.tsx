@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,10 +32,10 @@ export default function EditCareerPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (!careerData) return <div className="p-8 mt-20 text-center">Memuat Data Lowongan...</div>;
+  if (!careerData) return <div className="p-8 mt-20 text-center text-gray-500">Memuat Data Lowongan...</div>;
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-4xl flex flex-col gap-8">
+    <div className="w-full max-w-4xl flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Link href="/admin/careers" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowLeft size={24} />
@@ -89,6 +88,6 @@ export default function EditCareerPage({ params }: { params: Promise<{ id: strin
           {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />} Update Career
         </button>
       </form>
-    </motion.div>
+    </div>
   );
 }

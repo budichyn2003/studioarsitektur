@@ -52,18 +52,18 @@ model ProjectImage {
 }
 
 model News {
-  id            String   @id @default(uuid()) [cite: 10]
-  slug          String   @unique [cite: 10]
-  title         String [cite: 10]
-  contentEn     String?  @db.Text [cite: 10, 11]
-  contentId     String?  @db.Text [cite: 11]
-  thumbnailUrl  String? [cite: 11]
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  title         String
+  contentEn     String?  @db.Text
+  contentId     String?  @db.Text
+  thumbnailUrl  String?
   imageUrls     String[] // TAMBAHAN REVISI: Untuk mendukung multiple images
-  externalLink  String? [cite: 11]
-  publishDate   DateTime [cite: 12]
-  author        String? [cite: 12]
-  createdAt     DateTime @default(now()) [cite: 13]
-  updatedAt     DateTime @updatedAt [cite: 13]
+  externalLink  String?
+  publishDate   DateTime
+  author        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Career {
@@ -104,14 +104,24 @@ model AboutSetting {
 }
 
 model ContactSetting {
-  id          String   @id @default(uuid())
-  headline    String   @default("Let's discuss \nyour next project.")
-  subheadline String   @db.Text
-  email       String   @default("hello@architecture.com")
-  phone       String   @default("+62 812 3456 7890")
-  address     String   @default("Jl. Sudirman No. 123, Jakarta Selatan, Indonesia 12190")
-  bannerUrl   String   @default("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop")
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  headline     String   @default("Let's discuss \nyour next project.")
+  subheadline  String   @db.Text
+  email        String   @default("hello@architecture.com")
+  phone        String   @default("+62 812 3456 7890")
+  address      String   @default("Jl. Sudirman No. 123, Jakarta Selatan, Indonesia 12190")
+  calendlyLink String?  // INI JANGAN LUPA DITAMBAHKAN
+  bannerUrl    String   @default("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop")
+  updatedAt    DateTime @updatedAt
+}
+
+// INI JUGA JANGAN LUPA DITAMBAHKAN DI BAWAHNYA
+model SocialMediaSetting {
+  id        String   @id @default(uuid())
+  instagram String?
+  youtube   String?
+  linkedin  String?
+  updatedAt DateTime @updatedAt
 }
 
 model NewsSetting {
