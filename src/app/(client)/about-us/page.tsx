@@ -14,8 +14,9 @@ export default function AboutUsPage() {
   useEffect(() => {
     Promise.all([getAboutSettings(), getTeamMembers(), getFormerMembers()]).then(([aboutRes, teamRes, formerRes]) => {
       if (aboutRes.success && aboutRes.data) setSettings(aboutRes.data);
-      if (teamRes.success) setTeamMembers(teamRes.data);
-      if (formerRes.success) setFormerMembers(formerRes.data);
+      // PERBAIKAN: Tambahkan fallback || [] agar TypeScript Vercel lolos
+      if (teamRes.success) setTeamMembers(teamRes.data || []);
+      if (formerRes.success) setFormerMembers(formerRes.data || []);
       setLoading(false);
     });
   }, []);
