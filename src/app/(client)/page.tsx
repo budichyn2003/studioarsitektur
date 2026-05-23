@@ -21,8 +21,8 @@ export default function HomePage() {
         if (res.data.delayTimer) {
           setDelay(res.data.delayTimer);
         }
-        if (res.data.heroDescription) {
-          setHeroDesc(res.data.heroDescription);
+        if ((res.data as any).heroDescription) {
+          setHeroDesc((res.data as any).heroDescription);
         }
       }
     });
