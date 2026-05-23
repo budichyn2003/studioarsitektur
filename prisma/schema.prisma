@@ -37,7 +37,9 @@ model Project {
   siteArea          String?  
   constructedArea   String?
   collaborate       String?
-  photographs       String?  
+  photographs       String? 
+  construction         String?
+  interiorConstruction String? 
 }
 
 model ProjectImage {
