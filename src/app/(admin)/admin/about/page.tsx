@@ -21,8 +21,9 @@ export default function AdminAboutPage() {
         setHeroPreview(res.data.heroUrl);
       }
     });
-    getTeamMembers().then(res => res.success && setTeam(res.data));
-    getFormerMembers().then(res => res.success && setFormers(res.data));
+    // Perbaikan: Tambahkan fallback || [] agar TypeScript di Vercel tidak protes
+    getTeamMembers().then(res => res.success && setTeam(res.data || []));
+    getFormerMembers().then(res => res.success && setFormers(res.data || []));
   };
 
   useEffect(() => { loadData(); }, []);
