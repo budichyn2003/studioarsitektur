@@ -21,7 +21,7 @@ export default function AdminAboutPage() {
         setHeroPreview(res.data.heroUrl);
       }
     });
-    // Perbaikan: Tambahkan fallback || [] agar TypeScript di Vercel tidak protes
+    // PERBAIKAN: Tambahkan || [] di sini agar TypeScript Vercel tenang
     getTeamMembers().then(res => res.success && setTeam(res.data || []));
     getFormerMembers().then(res => res.success && setFormers(res.data || []));
   };
