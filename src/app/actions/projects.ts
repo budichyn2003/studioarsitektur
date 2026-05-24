@@ -24,6 +24,9 @@ export async function createProject(formData: FormData) {
     const collaborate = formData.get('collaborate') as string;
     const photographs = formData.get('photographs') as string;
 
+    const construction = formData.get('construction') as string;
+    const interiorConstruction = formData.get('interiorConstruction') as string;
+
     const imageFiles = formData.getAll('images') as File[];
     const validImages = imageFiles.filter(file => file.size > 0);
 
@@ -54,6 +57,8 @@ export async function createProject(formData: FormData) {
         architect,
         photographer,
         interior,
+        construction,         // <--- TAMBAHKAN INI
+        interiorConstruction, // <--- TAMBAHKAN INI
         descriptionId: description, 
         projectDate: projectDateInput ? new Date(projectDateInput) : new Date(),
         buildYear,

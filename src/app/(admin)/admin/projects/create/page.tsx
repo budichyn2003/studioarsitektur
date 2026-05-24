@@ -238,6 +238,18 @@ export default function CreateProjectPage() {
             </div>
           </div>
 
+          {/* BARIS BARU UNTUK CONSTRUCTION & INTERIOR CONSTRUCTION */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Construction</label>
+              <input name="construction" type="text" placeholder="e.g. PT Bangun Persada" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Interior Construction</label>
+              <input name="interiorConstruction" type="text" placeholder="e.g. CV Indo Karya" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2 border-t border-dashed border-gray-200 pt-6 mt-2">
             <label className="text-arch-grayMenu text-[14px]">Description</label>
             <textarea name="description" rows={5} required className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-arch-black resize-none" />
