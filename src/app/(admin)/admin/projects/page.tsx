@@ -5,8 +5,13 @@ import ProjectActions from "@/components/admin/ProjectActions";
 
 export default async function ManageProjectsPage() {
   const projects = await prisma.project.findMany({
-    include: { images: { take: 1 } },
-    orderBy: { createdAt: 'desc' },
+    include: { 
+      images: { 
+        orderBy: { order: 'asc' }, // INI KUNCI MUTLAKNYA
+        take: 1 
+      } 
+    },
+    orderBy: { createdAt: 'desc' }, // (Atau projectDate, biarkan sesuai bawaan kodenya)
   });
 
   return (

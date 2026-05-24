@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Upload, Save, Loader2, X } from 'lucide-react';
+import { ArrowLeft, Upload, Save, Loader2, X, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/app/actions/projects';
 
-// --- MESIN KOMPRESOR SILUMAN (Sistem Antre Client-Side agar File Jumbo Jadi Ringan) ---
+// Mesin Kompresor Existing
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -18,47 +18,32 @@ const compressImage = async (file: File): Promise<File> => {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1920; // Resolusi Full HD agar tetap tajam di layar gila sekalipun
+        const MAX_WIDTH = 1920; 
         const MAX_HEIGHT = 1080;
-        let width = img.width;
-        let height = img.height;
+        let width = img.width; let height = img.height;
 
         if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = Math.round(height * MAX_WIDTH / width);
-            width = MAX_WIDTH;
-          }
+          if (width > MAX_WIDTH) { height = Math.round(height * MAX_WIDTH / width); width = MAX_WIDTH; }
         } else {
-          if (height > MAX_HEIGHT) {
-            width = Math.round(width * MAX_HEIGHT / height);
-            height = MAX_HEIGHT;
-          }
+          if (height > MAX_HEIGHT) { width = Math.round(width * MAX_HEIGHT / height); height = MAX_HEIGHT; }
         }
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob((blob) => {
           if (blob) {
-            const newFileName = file.name.replace(/\.[^/.]+$/, ".jpg");
-            const newFile = new File([blob], newFileName, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
+            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg', lastModified: Date.now() });
             resolve(newFile);
-          } else {
-            resolve(file);
-          }
-        }, 'image/jpeg', 0.85); // Kualitas 85% sangat optimal untuk detail arsitektur
+          } else { resolve(file); }
+        }, 'image/jpeg', 0.85); 
       };
       img.onerror = () => resolve(file);
     };
     reader.onerror = () => resolve(file);
   });
 };
-// -------------------------------------------------------------------------------------
 
 export default function CreateProjectPage() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -67,57 +52,60 @@ export default function CreateProjectPage() {
   const [isCompressing, setIsCompressing] = useState(false);
   const router = useRouter();
 
-  // Handle Multi-Upload Tanpa Batasan Jumlah Gambar (Unlimited)
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    
     if (files.length > 0) {
-      setIsCompressing(true); // Hidupkan loading optimasi gambar
-
+      setIsCompressing(true);
       const compressedFiles: File[] = [];
-      
-      // SISTEM ANTREAN: Diproses satu per satu agar RAM laptop klien tidak jebol
       for (const file of files) {
-        if (file.size < 500 * 1024) {
-          // Jika ukuran file bawaan sudah di bawah 500KB, tidak perlu dikompres lagi
-          compressedFiles.push(file);
-        } else {
-          const compressed = await compressImage(file);
-          compressedFiles.push(compressed);
-        }
+        if (file.size < 500 * 1024) compressedFiles.push(file);
+        else compressedFiles.push(await compressImage(file));
       }
-
       setImageFiles(prev => [...prev, ...compressedFiles]);
-      const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-      setPreviewImages(prev => [...prev, ...newPreviews]);
-      
-      setIsCompressing(false); // Matikan loading optimasi
+      setPreviewImages(prev => [...prev, ...compressedFiles.map(file => URL.createObjectURL(file))]);
+      setIsCompressing(false); 
     }
   };
 
-  // Hapus gambar dari list preview
-  const removeImage = (indexToRemove: number) => {
-    setImageFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
-    setPreviewImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, idx) => idx !== index));
+    setPreviewImages(prev => prev.filter((_, idx) => idx !== index));
+  };
+
+  // LOGIKA MUTLAK URUTAN & COVER
+  const setAsCover = (index: number) => {
+    const newFiles = [...imageFiles];
+    const newPreviews = [...previewImages];
+    const [selectedFile] = newFiles.splice(index, 1);
+    const [selectedPreview] = newPreviews.splice(index, 1);
+    newFiles.unshift(selectedFile); // Paksa ke urutan index 0
+    newPreviews.unshift(selectedPreview);
+    setImageFiles(newFiles);
+    setPreviewImages(newPreviews);
+  };
+
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    const newFiles = [...imageFiles];
+    const newPreviews = [...previewImages];
+    const target = direction === 'left' ? index - 1 : index + 1;
+    
+    [newFiles[index], newFiles[target]] = [newFiles[target], newFiles[index]];
+    [newPreviews[index], newPreviews[target]] = [newPreviews[target], newPreviews[index]];
+    
+    setImageFiles(newFiles);
+    setPreviewImages(newPreviews);
   };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (imageFiles.length === 0) {
-      alert("Harap unggah minimal 1 gambar!");
-      return;
-    }
-
+    if (imageFiles.length === 0) return alert("Harap unggah minimal 1 gambar!");
     setLoading(true);
+
     const formData = new FormData(e.currentTarget);
-    
-    // Gabungkan semua file gambar ke dalam FormData dengan key 'images'
-    imageFiles.forEach(file => {
-      formData.append('images', file);
-    });
+    // Urutan file yang di-append di sini sudah MUTLAK sama dengan visual di layar
+    imageFiles.forEach(file => formData.append('images', file));
 
     const result = await createProject(formData);
-
     if (result.success) {
       router.push('/admin/projects');
       router.refresh();
@@ -130,46 +118,44 @@ export default function CreateProjectPage() {
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-5xl flex flex-col gap-8 pb-20">
       <div className="flex items-center gap-4">
-        <Link href="/admin/projects" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ArrowLeft size={24} />
-        </Link>
+        <Link href="/admin/projects" className="p-2 hover:bg-gray-100 rounded-full transition-colors"><ArrowLeft size={24} /></Link>
         <h1 className="text-arch-black text-[28px] font-bold">Add New Project</h1>
       </div>
 
       <form className="grid grid-cols-1 lg:grid-cols-3 gap-8" onSubmit={handleSubmit}>
         
-        {/* KOLOM KIRI: MULTI IMAGE UPLOAD */}
+        {/* KOLOM KIRI: MULTI IMAGE MANAGER */}
         <div className="lg:col-span-1 flex flex-col gap-4">
-          <label className="font-semibold text-arch-black">Project Images</label>
+          <label className="font-semibold text-arch-black">Project Images (Drag/Set Cover)</label>
           <div className="grid grid-cols-2 gap-4">
             
-            {/* Preview Gambar yang sudah dipilih */}
             {previewImages.map((src, idx) => (
-              <div key={idx} className={`relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group ${idx === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-[3/4]'}`}>
-                <Image src={src} alt={`Preview ${idx + 1}`} fill className="object-cover" />
-                <button 
-                  type="button" 
-                  onClick={() => removeImage(idx)}
-                  className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                >
-                  <X size={16} />
-                </button>
-                {idx === 0 && <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded">COVER</span>}
+              <div key={idx} className={`relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group ${idx === 0 ? 'col-span-2 aspect-[4/3] border-arch-black border-2' : 'aspect-[3/4]'}`}>
+                <Image src={src} alt={`Preview ${idx + 1}`} fill className="object-cover" sizes="300px" />
+                
+                {/* OVERLAY ACTION MUTLAK */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-2">
+                  <div className="flex justify-between w-full">
+                    {idx !== 0 ? (
+                      <button type="button" onClick={() => setAsCover(idx)} className="bg-white/20 hover:bg-white text-white hover:text-black text-[10px] px-2 py-1 rounded-sm flex items-center gap-1 transition-colors"><Star size={12}/> Set Cover</button>
+                    ) : <span className="bg-black text-white text-[10px] px-2 py-1 rounded-sm flex items-center gap-1"><Star size={12} className="fill-white"/> COVER</span>}
+                    <button type="button" onClick={() => removeImage(idx)} className="bg-red-500 hover:bg-red-600 text-white p-1 rounded-sm transition-colors"><X size={14} /></button>
+                  </div>
+                  
+                  {/* Geser Urutan */}
+                  <div className="flex justify-center gap-2">
+                    {idx > 0 && <button type="button" onClick={() => moveImage(idx, 'left')} className="bg-white text-black p-1 rounded-full hover:scale-110 transition-transform"><ChevronLeft size={16}/></button>}
+                    {idx < previewImages.length - 1 && <button type="button" onClick={() => moveImage(idx, 'right')} className="bg-white text-black p-1 rounded-full hover:scale-110 transition-transform"><ChevronRight size={16}/></button>}
+                  </div>
+                </div>
               </div>
             ))}
 
-            {/* Tombol Add Image - Sekarang selalu muncul tanpa batasan angka 5 */}
             <label className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-arch-black cursor-pointer bg-gray-50 transition-colors ${previewImages.length === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-[3/4]'} ${isCompressing ? 'opacity-50 pointer-events-none' : ''}`}>
               {isCompressing ? (
-                <>
-                  <Loader2 className="animate-spin text-arch-grayMenu mb-2" size={24} />
-                  <span className="text-arch-grayMenu text-[11px] text-center px-1">Optimizing...</span>
-                </>
+                <><Loader2 className="animate-spin text-arch-grayMenu mb-2" size={24} /><span className="text-arch-grayMenu text-[11px] text-center px-1">Optimizing...</span></>
               ) : (
-                <>
-                  <Upload size={24} className="text-arch-grayMenu mb-2" />
-                  <span className="text-arch-grayMenu text-[12px]">Upload</span>
-                </>
+                <><Upload size={24} className="text-arch-grayMenu mb-2" /><span className="text-arch-grayMenu text-[12px]">Upload</span></>
               )}
               <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} disabled={isCompressing} />
             </label>
@@ -177,8 +163,8 @@ export default function CreateProjectPage() {
           </div>
         </div>
 
-        {/* KOLOM KANAN: FORM INPUT DATA */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6">
+        {/* KOLOM KANAN: FORM DATA (Tidak diubah) */}
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6 h-max">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">Project Title</label>
             <input name="title" type="text" required className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black text-[18px] text-arch-black font-medium" />

@@ -28,8 +28,8 @@ export async function createProject(formData: FormData) {
     const validImages = imageFiles.filter(file => file.size > 0);
 
     if (validImages.length === 0) throw new Error("Minimal 1 gambar diperlukan");
-    // LIMIT 5 GAMBAR SUDAH DIHAPUS (Bisa upload berapapun)
 
+    // Urutan gambar (order) ditetapkan MUTLAK berdasarkan array yang dikirim dari form
     const uploadedImagesData = await Promise.all(
       validImages.map(async (file, index) => {
         const fileExt = file.name.split('.').pop();
@@ -40,6 +40,7 @@ export async function createProject(formData: FormData) {
 
         const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(fileName);
         
+        // Penetapan Order: 0 adalah cover
         return { url: publicUrl, width: 1920, height: 1080, order: index };
       })
     );
@@ -90,7 +91,6 @@ export async function deleteProject(id: string) {
 
 export async function updateProject(id: string, formData: FormData) {
   try {
-    // 1. Ambil semua inputan teks
     const title = formData.get('title') as string;
     const categoryInput = formData.get('category') as string; 
     const location = formData.get('location') as string;
@@ -106,40 +106,58 @@ export async function updateProject(id: string, formData: FormData) {
     const photographs = formData.get('photographs') as string;
     const interior = formData.get('interior') as string;
 
-    // 2. Cek apakah ada file cover baru yang diunggah
-    const imageFile = formData.get('image') as File | null;
-    
-    // Jika ada file gambar dan ukurannya lebih dari 0 (bukan file kosong)
-    if (imageFile && imageFile.size > 0) {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `cover-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage.from('project-images').upload(fileName, imageFile);
-      if (uploadError) throw uploadError;
+    // AMBIL INSTRUKSI MUTLAK DARI FRONTEND
+    const finalOrder = JSON.parse(formData.get('finalOrder') as string || '[]');
+    const deletedImages = JSON.parse(formData.get('deletedImages') as string || '[]');
+    const newFiles = formData.getAll('newFiles') as File[];
+    const newFilesIds = formData.getAll('newFilesIds') as string[];
 
-      const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(fileName);
-      
-      // Update Cover (Gambar pertama / order: 0)
-      const existingImages = await prisma.projectImage.findMany({ 
-        where: { projectId: id }, 
-        orderBy: { order: 'asc' } 
+    // 1. Eksekusi Penghapusan Gambar
+    if (deletedImages.length > 0) {
+      await prisma.projectImage.deleteMany({
+        where: { id: { in: deletedImages } }
       });
+    }
 
-      if (existingImages.length > 0) {
-        // Ganti URL gambar pertama
-        await prisma.projectImage.update({
-          where: { id: existingImages[0].id },
-          data: { url: publicUrl }
-        });
-      } else {
-        // Jika project belum punya gambar sama sekali, buat baru
-        await prisma.projectImage.create({
-          data: { url: publicUrl, projectId: id, order: 0, width: 1920, height: 1080 }
-        });
+    // 2. Upload Gambar Baru ke Supabase
+    const uploadedNewFiles: { id: string, url: string }[] = [];
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i];
+      const fileId = newFilesIds[i];
+      if (file.size > 0) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `project-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+        const { error } = await supabase.storage.from('project-images').upload(fileName, file);
+        if (!error) {
+          const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(fileName);
+          uploadedNewFiles.push({ id: fileId, url: publicUrl });
+        }
       }
     }
 
-    // 3. Update data teks project
+    // 3. Update & Insert Data ke Database dengan ORDER yang Mutlak
+    for (let i = 0; i < finalOrder.length; i++) {
+      const item = finalOrder[i];
+      
+      if (item.startsWith('existing_')) {
+        // Jika gambar lama, cukup perbarui urutan index-nya saja
+        const imageId = item.replace('existing_', '');
+        await prisma.projectImage.update({
+          where: { id: imageId },
+          data: { order: i }
+        });
+      } else {
+        // Jika gambar baru, cari url-nya dan buat data baru di database
+        const uploaded = uploadedNewFiles.find(u => u.id === item);
+        if (uploaded) {
+          await prisma.projectImage.create({
+            data: { url: uploaded.url, projectId: id, order: i, width: 1920, height: 1080 }
+          });
+        }
+      }
+    }
+
+    // 4. Update data teks project
     await prisma.project.update({
       where: { id },
       data: {
@@ -172,6 +190,7 @@ export async function getProject(id: string) {
   try {
     const project = await prisma.project.findUnique({
       where: { id },
+      // Mengambil gambar secara mutlak berdasarkan kolom 'order' dari database
       include: { images: { orderBy: { order: 'asc' } } }
     });
     return project;
