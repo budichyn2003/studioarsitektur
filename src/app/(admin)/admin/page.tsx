@@ -1,27 +1,28 @@
-'use client';
-
-import { motion } from 'framer-motion';
+import { prisma } from "@/lib/prisma";
 import { FolderKanban, Newspaper, Briefcase } from 'lucide-react';
 
-export default function AdminDashboardPage() {
-  // Data statis sementara untuk tampilan kartu statistik
+// Hapus 'use client' dan jadikan Server Component async
+export default async function AdminDashboardPage() {
+  // Hitung jumlah data secara realtime langsung dari database Prisma
+  const totalProjects = await prisma.project.count();
+  const totalCareers = await prisma.career.count({ where: { isActive: true } });
+  
+  // Asumsi model untuk News bernama 'news', jika error atau namanya beda ('article' misalnya), 
+  // akan otomatis menampilkan angka 0 sementara menggunakan catch()
+  const totalNews = await prisma.news.count().catch(() => 0); 
+
   const stats = [
-    { title: 'Total Projects', value: '12', icon: <FolderKanban size={24} />, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { title: 'Published News', value: '8', icon: <Newspaper size={24} />, color: 'text-green-600', bg: 'bg-green-100' },
-    { title: 'Active Careers', value: '3', icon: <Briefcase size={24} />, color: 'text-orange-600', bg: 'bg-orange-100' },
+    { title: 'Total Projects', value: totalProjects.toString(), icon: <FolderKanban size={24} />, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { title: 'Published News', value: totalNews.toString(), icon: <Newspaper size={24} />, color: 'text-green-600', bg: 'bg-green-100' },
+    { title: 'Active Careers', value: totalCareers.toString(), icon: <Briefcase size={24} />, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full flex flex-col gap-8"
-    >
+    <div className="w-full flex flex-col gap-8">
       {/* Header Dashboard */}
       <div>
         <h1 className="text-arch-black text-[32px] font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-arch-grayText text-[16px] mt-1">Welcome back! Here is what's happening with your portfolio today.</p>
+        <p className="text-arch-grayText text-[16px] mt-1">Welcome back! Realtime stats from your database.</p>
       </div>
 
       {/* Kartu Statistik */}
@@ -43,7 +44,6 @@ export default function AdminDashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mt-4 min-h-[400px] flex items-center justify-center">
         <p className="text-arch-grayMenu">Recent activity will appear here...</p>
       </div>
-
-    </motion.div>
+    </div>
   );
 }

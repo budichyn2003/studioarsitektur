@@ -10,7 +10,7 @@ export default function HomePage() {
   ]);
   const [delay, setDelay] = useState(3000);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [heroDesc, setHeroDesc] = useState("Selected Project Showcase — Minimalist Residential Space.");
+  const [heroDesc, setHeroDesc] = useState("");
 
   useEffect(() => {
     getHomepageSettings().then(res => {
