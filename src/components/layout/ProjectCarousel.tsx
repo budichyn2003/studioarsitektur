@@ -21,53 +21,78 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
     if (!container) return;
 
     const handleScroll = () => {
+      if (images.length === 0) return;
+
+      // Menggunakan getBoundingClientRect untuk akurasi 100% di layar (Bebas Bug Offset)
+      const containerRect = container.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
+
       let closestIndex = 0;
       let minDistance = Infinity;
 
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
-        const distance = Math.abs(
-          child.offsetLeft - container.scrollLeft - (container.clientWidth - child.clientWidth) / 2
-        );
+        const rect = child.getBoundingClientRect();
+        const childCenter = rect.left + rect.width / 2;
+        const distance = Math.abs(containerCenter - childCenter);
+
         if (distance < minDistance) {
           minDistance = distance;
           closestIndex = i;
         }
       }
+
+      // Deteksi ujung kanan (toleransi 10px untuk pembulatan layar)
+      const isAtEnd = container.scrollWidth - container.scrollLeft - container.clientWidth <= 10;
+      if (isAtEnd) {
+         closestIndex = images.length - 1;
+      }
+
       setActiveIndex(closestIndex);
     };
 
-    container.addEventListener('scroll', handleScroll);
-    handleScroll(); // Jalankan sekali di awal
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Panggil saat pertama kali load agar tombol langsung aktif yang benar
+    const timer = setTimeout(handleScroll, 100);
 
-    return () => container.removeEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(timer);
+    };
   }, [images]);
 
   const scrollToImage = (index: number) => {
     const container = containerRef.current;
     if (!container) return;
-    const child = container.children[index] as HTMLElement;
+    
+    // Kunci agar tidak bisa request index di luar jumlah gambar
+    const safeIndex = Math.max(0, Math.min(index, images.length - 1));
+    const child = container.children[safeIndex] as HTMLElement;
+    
     if (child) {
-      container.scrollTo({
-        left: child.offsetLeft - (container.clientWidth - child.clientWidth) / 2,
+      // Fungsi super mulus bawaan browser (Dijamin 1-1 dan mentok di tengah)
+      child.scrollIntoView({
         behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
       });
     }
   };
 
   return (
-    <div className="w-full max-w-5xl flex flex-col gap-4">
+    <div className="w-full max-w-5xl flex flex-col gap-2">
       <div
         ref={containerRef}
-        className="w-full flex flex-row gap-4 md:gap-6 overflow-x-auto snap-x pb-4 scroll-smooth"
+        // Ditambahkan "snap-mandatory" agar di-scroll via HP juga otomatis mengunci dengan rapi
+        className="w-full flex flex-row gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-2 scroll-smooth"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {images.length > 0 ? (
           images.map((image, index) => (
             <div
               key={image.id}
-              // Mempertahankan tinggi tetap agar ASPECT RATIO asli gambar terjaga 100% (tidak stretch/terpotong)
-              className="relative h-[350px] md:h-[500px] w-auto shrink-0 snap-center bg-gray-50 flex items-center justify-center overflow-hidden rounded-sm"
+              className="relative h-[35vh] md:h-[45vh] max-h-[450px] w-auto shrink-0 snap-center bg-gray-50 flex items-center justify-center overflow-hidden rounded-sm"
             >
               <img
                 src={image.url}
@@ -77,27 +102,29 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
             </div>
           ))
         ) : (
-          <div className="w-full h-[400px] bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 rounded-sm">
+          <div className="w-full h-[35vh] md:h-[45vh] bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 rounded-sm">
             No Images Available
           </div>
         )}
       </div>
 
-      {/* Slide Indicator / Carousel Indicator dots di bawah gambar */}
       {images.length > 1 && (
-        <div className="flex justify-center gap-2 mt-2 w-full">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => scrollToImage(index)}
-              className="h-2 rounded-full transition-all duration-300"
-              style={{
-                width: index === activeIndex ? '24px' : '8px',
-                backgroundColor: index === activeIndex ? '#000000' : '#D1D5DB',
-              }}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+        <div className="flex justify-between items-center w-full text-[11px] uppercase tracking-widest text-[#999999] font-medium px-1 mt-1">
+          <button
+            onClick={() => scrollToImage(activeIndex - 1)}
+            className={`hover:text-black transition-colors px-2 py-1 -ml-2 ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+            disabled={activeIndex === 0}
+          >
+            Previous
+          </button>
+          
+          <button
+            onClick={() => scrollToImage(activeIndex + 1)}
+            className={`hover:text-black transition-colors px-2 py-1 -mr-2 ${activeIndex === images.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+            disabled={activeIndex === images.length - 1}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

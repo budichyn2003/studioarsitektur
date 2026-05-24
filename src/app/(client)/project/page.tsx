@@ -11,11 +11,24 @@ export default async function ProjectGalleryPage({ searchParams }: { searchParam
     ? { category: currentCategory.toUpperCase() as any } 
     : {};
 
-  // Panggil data project dengan batas 1 gambar per project untuk thumbnail
-  const projects = await prisma.project.findMany({
+  // 1. Ambil semua data project dari database
+  const rawProjects = await prisma.project.findMany({
     where: whereClause,
     include: { images: { orderBy: { order: 'asc' }, take: 1 } },
-    orderBy: { projectDate: 'desc' },
+  });
+
+  // 2. SORTING CERDAS (Otomatis menyesuaikan tahun yang diketik Admin)
+  const projects = rawProjects.sort((a, b) => {
+    // Ambil angka tahun dari input 'buildYear', jika kosong baru pakai 'projectDate'
+    const yearA = parseInt(a.buildYear || '0') || new Date(a.projectDate).getFullYear();
+    const yearB = parseInt(b.buildYear || '0') || new Date(b.projectDate).getFullYear();
+    
+    // Urutkan dari tahun terbesar (terbaru) ke terkecil (terlama)
+    if (yearB !== yearA) {
+      return yearB - yearA; 
+    }
+    // Jika ada 2 project di tahun yang sama persis, urutkan berdasarkan tanggal terbarunya
+    return new Date(b.projectDate).getTime() - new Date(a.projectDate).getTime();
   });
 
   const getMenuClass = (menuName: string) => {
@@ -23,6 +36,39 @@ export default async function ProjectGalleryPage({ searchParams }: { searchParam
     return isActive 
       ? "text-black font-medium transition-colors" 
       : "text-[#999999] hover:text-black transition-colors";
+  };
+
+  const renderCard = (project: any, index: number) => {
+    const projectYear = project.buildYear || new Date(project.projectDate).getFullYear();
+    const isPriority = index < 4;
+
+    return (
+      <Link key={project.id} href={`/project/${project.id}`} className="block group relative overflow-hidden bg-gray-50 rounded-sm">
+        {project.images && project.images.length > 0 ? (
+          <Image 
+            src={project.images[0].url} 
+            alt={project.title} 
+            width={800}
+            height={1200}
+            className="w-full h-auto transition-all duration-700 group-hover:scale-[1.03] group-hover:blur-[2px]"
+            loading={isPriority ? undefined : "lazy"}
+            priority={isPriority}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="w-full aspect-[4/3] flex items-center justify-center text-gray-400">No Image</div>
+        )}
+
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center pointer-events-none">
+          <h3 className="text-white text-[22px] font-medium tracking-tighter uppercase translate-y-4 group-hover:translate-y-0 transition-transform duration-500 text-center px-4">
+            {project.title}
+          </h3>
+          <p className="text-white/90 text-[13px] tracking-[0.1em] mt-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+            {projectYear}
+          </p>
+        </div>
+      </Link>
+    );
   };
 
   return (
@@ -35,41 +81,32 @@ export default async function ProjectGalleryPage({ searchParams }: { searchParam
         <Link href="/project?category=installation" className={getMenuClass('installation')}>Installation</Link>
       </div>
 
-      <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6">
-        {projects.map((project, index) => {
-          const projectYear = project.buildYear || new Date(project.projectDate).getFullYear();
-          const isPriority = index < 4;
+      {/* 1. VERSI MOBILE (1 Kolom) */}
+      <div className="flex flex-col sm:hidden gap-4">
+        {projects.map((project, index) => renderCard(project, index))}
+      </div>
 
-          return (
-            <Link key={project.id} href={`/project/${project.id}`} className="block break-inside-avoid group relative overflow-hidden bg-gray-50 rounded-sm">
-              {project.images && project.images.length > 0 ? (
-                <Image 
-                  src={project.images[0].url} 
-                  alt={project.title} 
-                  width={800}
-                  height={1200}
-                  // Membuang object-cover agar gambar mengalir natural (tidak kepotong)
-                  className="w-full h-auto transition-all duration-700 group-hover:scale-[1.03] group-hover:blur-[2px]"
-                  loading={isPriority ? undefined : "lazy"}
-                  priority={isPriority}
-                  // Panduan kompresi Next.js agar loading super cepat
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              ) : (
-                <div className="w-full aspect-[4/3] flex items-center justify-center text-gray-400">No Image</div>
-              )}
+      {/* 2. VERSI TABLET (2 Kolom) */}
+      <div className="hidden sm:flex lg:hidden w-full gap-4 md:gap-6">
+        <div className="flex flex-col flex-1 gap-4 md:gap-6">
+          {projects.filter((_, i) => i % 2 === 0).map((project, index) => renderCard(project, index * 2))}
+        </div>
+        <div className="flex flex-col flex-1 gap-4 md:gap-6">
+          {projects.filter((_, i) => i % 2 === 1).map((project, index) => renderCard(project, index * 2 + 1))}
+        </div>
+      </div>
 
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center pointer-events-none">
-                <h3 className="text-white text-[22px] font-medium tracking-tighter uppercase translate-y-4 group-hover:translate-y-0 transition-transform duration-500 text-center px-4">
-                  {project.title}
-                </h3>
-                <p className="text-white/90 text-[13px] tracking-[0.1em] mt-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
-                  {projectYear}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+      {/* 3. VERSI DESKTOP (3 Kolom) - Distribusi Z-Pattern (Kiri ke Kanan) */}
+      <div className="hidden lg:flex w-full gap-4 md:gap-6">
+        <div className="flex flex-col flex-1 gap-4 md:gap-6">
+          {projects.filter((_, i) => i % 3 === 0).map((project, index) => renderCard(project, index * 3))}
+        </div>
+        <div className="flex flex-col flex-1 gap-4 md:gap-6">
+          {projects.filter((_, i) => i % 3 === 1).map((project, index) => renderCard(project, index * 3 + 1))}
+        </div>
+        <div className="flex flex-col flex-1 gap-4 md:gap-6">
+          {projects.filter((_, i) => i % 3 === 2).map((project, index) => renderCard(project, index * 3 + 2))}
+        </div>
       </div>
 
       {projects.length === 0 && (

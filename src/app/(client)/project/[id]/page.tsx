@@ -26,55 +26,70 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const prevProject = currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
 
   return (
-    <div className="w-full min-h-screen pt-12 pb-32 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-8">
+    // Gap utama dan padding atas dirapatkan (gap-8 -> gap-5, pt-12 -> pt-10)
+    <div className="w-full min-h-screen pt-10 pb-32 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-5">
 
-      {/* TOP NAVIGATION: Previous & Next (Dikecilkan proporsional) */}
-      <div className="flex justify-between items-end w-full max-w-5xl mb-2">
+      {/* TOP NAVIGATION */}
+      <div className="flex justify-between items-end w-full max-w-5xl mb-1">
         <div className="flex flex-col">
           {prevProject ? (
             <Link href={`/project/${prevProject.id}`} className="group">
-              <span className="text-[#999999] text-[11px] uppercase tracking-wider mb-1 block group-hover:text-black transition-colors">Previous</span>
-              <span className="text-black text-[15px] md:text-[16px] font-medium transition-colors">{prevProject.title}</span>
+              <span className="text-[#999999] text-[10px] uppercase tracking-widest mb-1 block group-hover:text-black transition-colors">Previous</span>
+              <span className="text-black text-[13px] md:text-[14px] font-medium transition-colors">{prevProject.title}</span>
             </Link>
           ) : <div />}
         </div>
         <div className="flex flex-col text-right">
           {nextProject ? (
             <Link href={`/project/${nextProject.id}`} className="group">
-              <span className="text-[#999999] text-[11px] uppercase tracking-wider mb-1 block group-hover:text-black transition-colors">Next</span>
-              <span className="text-black text-[15px] md:text-[16px] font-medium transition-colors">{nextProject.title}</span>
+              <span className="text-[#999999] text-[10px] uppercase tracking-widest mb-1 block group-hover:text-black transition-colors">Next</span>
+              <span className="text-black text-[13px] md:text-[14px] font-medium transition-colors">{nextProject.title}</span>
             </Link>
           ) : <div />}
         </div>
       </div>
 
-      {/* GALERI MULTI-FOTO CAROUSEL CLIENT COMPONENT */}
+      {/* CAROUSEL */}
       <ProjectCarousel images={project.images} title={project.title} />
 
-      {/* PROJECT INFO (Title, Specs, Description) */}
-      <div className="flex flex-col w-full max-w-3xl mt-4">
+      {/* PROJECT INFO */}
+      <div className="flex flex-col w-full max-w-3xl mt-2">
         
-        <h1 className="text-[24px] md:text-[32px] font-medium text-black tracking-tight mb-1 uppercase">
+        {/* PERUBAHAN: Tipografi disamakan dengan About Us (text-[20px], font-bold, tracking-[0.15em]) */}
+        <h1 className="text-black text-[18px] md:text-[20px] font-bold tracking-[0.15em] uppercase leading-tight mb-1">
           {project.title}
         </h1>
-        <p className="text-[#999999] text-[14px] mb-12">
-          {project.location}{project.buildYear ? `, ${project.buildYear}` : ''}
+        {/* Margin bawah dikurangi agar makin compact */}
+        <p className="text-[#999999] text-[12px] uppercase tracking-widest mb-6">
+          {project.location}{project.buildYear ? ` — ${project.buildYear}` : ''}
         </p>
 
-        {/* Grid Spesifikasi */}
-        <div className="grid grid-cols-[160px_1fr] md:grid-cols-[200px_1fr] gap-y-5 text-[14px] mb-16">
-          {project.status && <><span className="text-[#999999]">Status</span><span className="text-black font-medium">{project.status}</span></>}
-          {project.architectInCharge && <><span className="text-[#999999]">Architect In Charge</span><span className="text-black font-medium">{project.architectInCharge}</span></>}
-          {project.drafter && <><span className="text-[#999999]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>}
-          {project.siteArea && <><span className="text-[#999999]">Site Area</span><span className="text-black font-medium">{project.siteArea} m2</span></>}
-          {project.constructedArea && <><span className="text-[#999999]">Constructed Area</span><span className="text-black font-medium">{project.constructedArea} m2</span></>}
-          {project.collaborate && <><span className="text-[#999999]">In Collaborate</span><span className="text-black font-medium">{project.collaborate}</span></>}
-          {project.photographs && <><span className="text-[#999999]">Photographs</span><span className="text-black font-medium">{project.photographs}</span></>}
+        {/* Grid Spesifikasi: Gap dirapatkan (gap-y-3), margin dikecilkan, label dibuat compact */}
+        <div className="grid grid-cols-[130px_1fr] md:grid-cols-[180px_1fr] gap-y-3 text-[13px] mb-8">
+          {project.status && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Status</span><span className="text-black font-medium">{project.status}</span></>}
+          {project.architectInCharge && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Architect</span><span className="text-black font-medium">{project.architectInCharge}</span></>}
+          {project.drafter && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>}
+          {project.construction && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Construction</span><span className="text-black font-medium">{project.construction}</span></>}
+          {project.interiorConstruction && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior</span><span className="text-black font-medium">{project.interiorConstruction}</span></>}
+          {project.siteArea && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Site Area</span><span className="text-black font-medium">{project.siteArea} m²</span></>}
+          {project.constructedArea && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Const. Area</span><span className="text-black font-medium">{project.constructedArea} m²</span></>}
+          {project.collaborate && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Collaborate</span><span className="text-black font-medium">{project.collaborate}</span></>}
+          {project.photographs && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Photographs</span><span className="text-black font-medium">{project.photographs}</span></>}
         </div>
 
-        {/* Description */}
-        <div className="text-[#333333] text-[15px] leading-[1.8] whitespace-pre-wrap text-justify">
-          {project.descriptionId}
+        {/* Description: Teks size sedikit dirapatkan dari 15px jadi 14px */}
+        <div className="relative text-[#333333] text-[14px] leading-[1.8] text-justify whitespace-pre-wrap">
+          <input type="checkbox" id="desc-toggle" className="peer hidden" />
+          <div className="line-clamp-3 peer-checked:line-clamp-none transition-all duration-300">
+            {project.descriptionId}
+          </div>
+          
+          <label htmlFor="desc-toggle" className="text-black font-semibold text-[11px] uppercase tracking-widest cursor-pointer block mt-3 peer-checked:hidden hover:opacity-70 w-fit">
+            + Show More
+          </label>
+          <label htmlFor="desc-toggle" className="text-black font-semibold text-[11px] uppercase tracking-widest cursor-pointer hidden mt-3 peer-checked:block hover:opacity-70 w-fit">
+            - Show Less
+          </label>
         </div>
         
       </div>
