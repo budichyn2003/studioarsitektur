@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image'; // <-- TAMBAHAN IMPORT UNTUK LOGO
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
@@ -71,12 +72,16 @@ export default function Sidebar() {
       {/* ========================================= */}
       <aside className="hidden lg:flex w-[300px] h-screen fixed left-0 top-0 flex-col pt-12 pb-10 px-12 bg-white border-r border-gray-50">
         
-        {/* LOGO (Di Atas) */}
+        {/* LOGO (Di Atas) - SUDAH DIGANTI LOGO GIGIH */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0">
-          <span className="w-[40px] h-[40px] bg-arch-black text-white flex items-center justify-center font-bold text-xl tracking-tighter">
-            N
-          </span>
-          <span className="text-arch-black font-medium text-[15px] tracking-wide">Architecture</span>
+          <Image 
+            src="/studiogigih.png" 
+            alt="Studio Gigih Logo" 
+            width={40} 
+            height={40} 
+            className="object-contain"
+          />
+          <span className="text-arch-black font-medium text-[15px] tracking-wide">Studio Gigih</span>
         </Link>
 
         {/* MENU NAVIGASI (Flex-grow memastikan dia selalu di tengah-tengah layar) */}
@@ -112,11 +117,17 @@ export default function Sidebar() {
       {/* 2. VERSI MOBILE (Header Atas & Burger)    */}
       {/* ========================================= */}
       <header className="lg:hidden fixed top-0 left-0 w-full h-[80px] bg-white/90 backdrop-blur-md flex items-center justify-between px-6 border-b border-gray-100 z-[60]">
+        
+        {/* LOGO MOBILE - SUDAH DIGANTI LOGO GIGIH */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
-          <span className="w-[36px] h-[36px] bg-arch-black text-white flex items-center justify-center font-bold text-xl tracking-tighter">
-            N
-          </span>
-          <span className="text-arch-black font-medium text-[15px] tracking-wide">Architecture</span>
+          <Image 
+            src="/gigih.png" 
+            alt="Studio Gigih Logo" 
+            width={36} 
+            height={36} 
+            className="object-contain"
+          />
+          <span className="text-arch-black font-medium text-[15px] tracking-wide">Studio Gigih</span>
         </Link>
 
         <button

@@ -9,9 +9,14 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "N Architecture",
-  description: "Portfolio Karya Arsitektur Estetik",
+
+export const metadata = {
+  title: 'Studio Gigih | Architecture Portfolio',
+  description: 'Portfolio of Studio Gigih Architecture',
+  // TAMBAHKAN KODE INI UNTUK MENGGANTI LOGO TAB BROWSER:
+  icons: {
+    icon: '/gigih.png',
+  },
 };
 
 export default function RootLayout({
