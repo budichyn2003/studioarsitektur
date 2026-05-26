@@ -9,13 +9,39 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-
-export const metadata = {
-  title: 'Studio Gigih | Architecture Portfolio',
-  description: 'Portfolio of Studio Gigih Architecture',
-  // TAMBAHKAN KODE INI UNTUK MENGGANTI LOGO TAB BROWSER:
+// ==========================================
+// KODE SEO BARU YANG SUDAH DIGABUNGKAN
+// ==========================================
+export const metadata: Metadata = {
+  title: {
+    default: 'Studio Gigih | Architecture Portfolio',
+    template: '%s | Studio Gigih' // Format judul otomatis untuk halaman lain
+  },
+  description: 'Portfolio of Studio Gigih, specializing in residential, public, and installation architecture.',
+  keywords: ['Architecture', 'Studio Gigih', 'Architect Jakarta', 'Desain Interior', 'Arsitektur Indonesia', 'Jasa Arsitek'],
+  authors: [{ name: 'Studio Gigih' }],
+  creator: 'Studio Gigih',
+  metadataBase: new URL('https://www.studiogigih.com'),
+  
+  openGraph: {
+    type: 'website',
+    locale: 'id_ID',
+    url: 'https://www.studiogigih.com',
+    title: 'Studio Gigih | Architecture Portfolio',
+    description: 'Explore the architectural masterpieces and innovative designs by Studio Gigih.',
+    siteName: 'Studio Gigih',
+    images: [
+      {
+        url: '/gigih.png',
+        width: 1200,
+        height: 630,
+        alt: 'Studio Gigih Architecture',
+      },
+    ],
+  },
+  
   icons: {
-    icon: '/gigih.png',
+    icon: '/gigih.png', // Hapus bagian ini JIKA kamu sudah merename logonya menjadi icon.png di dalam folder src/app
   },
 };
 
@@ -33,4 +59,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+}  

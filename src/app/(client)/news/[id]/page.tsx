@@ -3,6 +3,29 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, User, ArrowUpRight } from "lucide-react";
 
+import { Metadata } from 'next';
+
+// Fungsi otomatis Next.js untuk membuat meta tags dinamis
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  
+  const newsItem = await prisma.news.findUnique({
+    where: { id: resolvedParams.id },
+  });
+
+  if (!newsItem) return { title: 'News Not Found' };
+
+  return {
+    title: newsItem.title,
+    description: newsItem.contentId?.substring(0, 160) || 'Read the latest news from Studio Gigih.',
+    openGraph: {
+      title: newsItem.title,
+      description: newsItem.contentId?.substring(0, 160) || 'Read the latest news from Studio Gigih.',
+      images: newsItem.thumbnailUrl ? [newsItem.thumbnailUrl] : ['/gigih.png'],
+    },
+  };
+}
+
 export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const newsId = resolvedParams.id;
