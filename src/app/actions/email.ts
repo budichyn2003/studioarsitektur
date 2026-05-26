@@ -27,16 +27,24 @@ export async function sendApplicationEmail(formData: FormData) {
       attachments.push({ filename: portfolio.name, content: portBuffer });
     }
 
-    await resend.emails.send({
-      from: 'Career Portal <onboarding@resend.dev>', // Default Resend untuk testing
-      to: 'infogigihproject@gmail.com', // Email tujuan asli
+    // Eksekusi pengiriman email
+    const data = await resend.emails.send({
+      from: 'Career Portal <onboarding@resend.dev>', // Catatan: Ini mode sandbox
+      to: 'infogigihproject@gmail.com', // Tujuan email yang diminta
       subject: `New Application: ${jobTitle} - ${name}`,
       text: `Ada lamaran baru masuk dari Website Portfolio!\n\nPosisi: ${jobTitle}\nNama Lengkap: ${name}\nEmail: ${email}\nWhatsApp: ${phone || '-'}\n\nFile CV dan Portfolio terlampir pada email ini.`,
       attachments: attachments,
     });
 
+    // FIX: Menangkap jika ada error spesifik dari server Resend
+    if (data.error) {
+      console.error("Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal mengirim email' };
+    console.error("Action Error:", error);
+    return { success: false, error: error.message || 'Gagal memproses email' };
   }
 }

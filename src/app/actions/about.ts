@@ -63,7 +63,7 @@ export async function updateAboutSettings(formData: FormData) {
     }
 
     revalidatePath('/about-us');
-    revalidatePath('/admin/about');
+    revalidatePath('/admin'); // FIX: Revalidate all admin paths
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -97,6 +97,31 @@ export async function addTeamMember(formData: FormData) {
 
     await prisma.teamMember.create({ data: { name, role, imageUrl } });
     revalidatePath('/about-us');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// FIX: Tambahan Fungsi Update Team (Sangat Krusial Untuk CMS)
+export async function updateTeamMember(id: string, formData: FormData) {
+  try {
+    const name = formData.get('name') as string;
+    const role = formData.get('role') as string;
+    const image = formData.get('image') as File | null;
+    
+    const updateData: any = { name, role };
+
+    if (image && image.size > 0) {
+      const fileName = `team-${Date.now()}.${image.name.split('.').pop()}`;
+      const { error } = await supabase.storage.from('project-images').upload(fileName, image);
+      if (!error) updateData.imageUrl = supabase.storage.from('project-images').getPublicUrl(fileName).data.publicUrl;
+    }
+
+    await prisma.teamMember.update({ where: { id }, data: updateData });
+    revalidatePath('/about-us');
+    revalidatePath('/admin');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -107,6 +132,7 @@ export async function deleteTeamMember(id: string) {
   try {
     await prisma.teamMember.delete({ where: { id } });
     revalidatePath('/about-us');
+    revalidatePath('/admin');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -130,6 +156,20 @@ export async function addFormerMember(formData: FormData) {
     const name = formData.get('name') as string;
     await prisma.formerMember.create({ data: { name } });
     revalidatePath('/about-us');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// FIX: Tambahan Fungsi Update Former Member (Sangat Krusial Untuk CMS)
+export async function updateFormerMember(id: string, formData: FormData) {
+  try {
+    const name = formData.get('name') as string;
+    await prisma.formerMember.update({ where: { id }, data: { name } });
+    revalidatePath('/about-us');
+    revalidatePath('/admin');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -140,6 +180,7 @@ export async function deleteFormerMember(id: string) {
   try {
     await prisma.formerMember.delete({ where: { id } });
     revalidatePath('/about-us');
+    revalidatePath('/admin');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

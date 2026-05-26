@@ -10,33 +10,51 @@ export default function AboutUsPage() {
   const [settings, setSettings] = useState({ showHero: true, title: 'ABOUT US', content: '', heroUrl: '' });
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [formerMembers, setFormerMembers] = useState<any[]>([]);
+  
+  // State untuk Infinite Slider
+  const [startIndex, setStartIndex] = useState(0);
 
   useEffect(() => {
     Promise.all([getAboutSettings(), getTeamMembers(), getFormerMembers()]).then(([aboutRes, teamRes, formerRes]) => {
       if (aboutRes.success && aboutRes.data) setSettings(aboutRes.data);
-      // PERBAIKAN: Tambahkan fallback || [] agar TypeScript Vercel lolos
       if (teamRes.success) setTeamMembers(teamRes.data || []);
       if (formerRes.success) setFormerMembers(formerRes.data || []);
       setLoading(false);
     });
   }, []);
 
+  // Fungsi Slider Infinite Loop (Maju & Mundur)
+  const handleNext = () => {
+    setStartIndex((prev) => (prev + 1) % teamMembers.length);
+  };
+  const handlePrev = () => {
+    setStartIndex((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
+  };
+
+  // Algoritma mengambil 4 anggota aktif untuk ditampilkan (dengan dukungan Infinite Loop)
+  const visibleMembers = [];
+  if (teamMembers.length > 0) {
+    const displayCount = Math.min(4, teamMembers.length); // Memastikan maksimal tampil 4
+    for (let i = 0; i < displayCount; i++) {
+      visibleMembers.push(teamMembers[(startIndex + i) % teamMembers.length]);
+    }
+  }
+
   if (loading) return <div className="p-8 text-center mt-20 text-gray-400">Loading About Content...</div>; 
 
   return (
-    // LOGIKA VIEWPORT PENTING: Jika text tidak diexpand = 1 Layar Kunci. Jika diexpand = Bisa di-scroll.
     <div className={`w-full ${showMoreDesc ? 'min-h-[100dvh] overflow-y-auto' : 'h-[100dvh] overflow-hidden'} pt-20 pb-10 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-6 bg-white transition-all duration-300`}>
       
-      {/* AREA FOTO HERO (Ukuran diefisiensikan agar muat 1 layar) */}
+      {/* REVISI HERO IMAGE: Diubah menjadi proporsi lebar (Banner style) mirip News & Career */}
       {settings.showHero && settings.heroUrl && (
-        <div className="w-full flex justify-center flex-shrink-0">
-          <div className="relative w-full max-w-[280px] md:max-w-[320px] aspect-[3/4] max-h-[35vh] rounded-sm overflow-hidden bg-gray-50 border border-gray-100">
-            <Image src={settings.heroUrl} alt="About Us Hero" fill className="object-cover object-center" priority sizes="320px" />
+        <div className="w-full max-w-5xl mx-auto flex-shrink-0">
+          <div className="relative w-full h-[180px] md:h-[220px] lg:h-[30vh] rounded-sm overflow-hidden bg-gray-50 shadow-sm border border-gray-100">
+            <Image src={settings.heroUrl} alt="About Us Hero" fill className="object-cover object-center" priority sizes="(max-width: 1024px) 100vw, 80vw" />
           </div>
         </div>
       )}
 
-      {/* AREA TEKS DESKRIPSI (Justify, 4 Baris Default + Tombol Show More) */}
+      {/* AREA TEKS DESKRIPSI */}
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 flex-shrink-0">
         <h2 className="text-black text-[20px] font-bold tracking-[0.15em] uppercase">
           {settings.title}
@@ -54,12 +72,23 @@ export default function AboutUsPage() {
         </div>
       </div>
 
-      {/* SECTION: OUR TEAM (Jarak rapat, Default Grid 4. Jika lebih, otomatis zigzag/Z-pattern ke bawah) */}
+      {/* SECTION: OUR TEAM DENGAN INFINITE SLIDER */}
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-4 border-t border-gray-100 pt-5 flex-shrink-0">
-        <h3 className="text-black text-[20px] font-bold uppercase tracking-tight">Our Team</h3>
+        <div className="flex justify-between items-end w-full">
+          <h3 className="text-black text-[20px] font-bold uppercase tracking-tight">Our Team</h3>
+          
+          {/* Tombol Navigasi hanya muncul jika total data member lebih dari 4 */}
+          {teamMembers.length > 4 && (
+            <div className="flex gap-4 text-[11px] uppercase tracking-widest text-[#999999] font-medium pb-1">
+              <button onClick={handlePrev} className="hover:text-black transition-colors">Prev</button>
+              <button onClick={handleNext} className="hover:text-black transition-colors">Next</button>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {teamMembers.map((member) => (
-            <div key={member.id} className="group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden cursor-pointer">
+          {visibleMembers.map((member, idx) => (
+            <div key={`${member.id}-${idx}`} className="group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden cursor-pointer animate-in fade-in duration-500">
               <Image src={member.imageUrl} alt={member.name} fill className="object-cover object-center transition-all duration-700 group-hover:blur-[2px] group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 25vw" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center pointer-events-none">
                 <h4 className="text-white text-[16px] font-bold uppercase tracking-wide translate-y-2 group-hover:translate-y-0 transition-transform duration-500">{member.name}</h4>
@@ -70,7 +99,7 @@ export default function AboutUsPage() {
         </div>
       </div>
 
-      {/* SECTION: FORMER MEMBERS (Teks Regular, Compact) */}
+      {/* SECTION: FORMER MEMBERS */}
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-2 border-t border-gray-100 pt-4 flex-shrink-0 pb-10">
         <h3 className="text-black text-[20px] font-bold uppercase tracking-tight">Former Members</h3>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#555555] text-[14px] font-normal leading-relaxed">

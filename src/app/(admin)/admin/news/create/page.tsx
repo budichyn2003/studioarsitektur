@@ -75,6 +75,12 @@ export default function CreateNewsPage() {
           )}
         </div>
 
+        {/* TAMBAHAN INPUT EXTERNAL LINK */}
+          <div className="flex flex-col gap-2">
+            <label className="text-arch-grayMenu text-[14px]">External Website Link (Optional)</label>
+            <input name="externalLink" type="url" placeholder="https://..." className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black text-[14px]" />
+          </div>
+
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border shadow-sm flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">News Title</label>

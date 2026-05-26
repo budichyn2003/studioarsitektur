@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Mail, X, Loader2, CheckCircle2 } from "lucide-react";
-import { sendApplicationEmail } from "@/app/actions/email"; // Import Server Action
+import { sendApplicationEmail } from "@/app/actions/email";
 
 export default function ApplyButton({ jobTitle }: { jobTitle: string }) {
   const [showPopup, setShowPopup] = useState(false);
@@ -13,24 +13,40 @@ export default function ApplyButton({ jobTitle }: { jobTitle: string }) {
     e.preventDefault();
     setSubmitting(true);
     
-    // Tarik semua data dari elemen input di form (menggunakan atribut 'name')
     const formData = new FormData(e.currentTarget);
-    formData.append('jobTitle', jobTitle); // Menyisipkan nama posisi pekerjaan
+    formData.append('jobTitle', jobTitle);
 
-    // Kirim ke backend untuk diemail via Resend
-    const result = await sendApplicationEmail(formData);
+    // FIX: Validasi ukuran file di sisi Client (Maks 10MB) agar tidak menyebabkan server Hang/Stuck
+    const cvFile = formData.get('cv') as File;
+    const portfolioFile = formData.get('portfolio') as File;
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB dalam bytes
 
-    if (result.success) {
+    if ((cvFile && cvFile.size > MAX_FILE_SIZE) || (portfolioFile && portfolioFile.size > MAX_FILE_SIZE)) {
+      alert("Maaf, ukuran file CV atau Portfolio maksimal adalah 10MB. Silakan kompres file Anda terlebih dahulu.");
       setSubmitting(false);
-      setSuccess(true);
-      setTimeout(() => {
-        setShowPopup(false);
-        setSuccess(false);
-      }, 3000); // Popup tertutup otomatis setelah 3 detik
-    } else {
+      return;
+    }
+
+    try {
+      // Kirim ke backend untuk diemail via Resend
+      const result = await sendApplicationEmail(formData);
+
+      if (result.success) {
+        setSubmitting(false);
+        setSuccess(true);
+        setTimeout(() => {
+          setShowPopup(false);
+          setSuccess(false);
+        }, 3000); 
+      } else {
+        setSubmitting(false);
+        alert(`Gagal mengirim lamaran: ${result.error}`);
+        console.error("Email Error:", result.error);
+      }
+    } catch (error) {
       setSubmitting(false);
-      alert("Maaf, gagal mengirim lamaran. Silakan coba lagi.");
-      console.error(result.error);
+      alert("Terjadi kesalahan sistem. Silakan coba beberapa saat lagi.");
+      console.error("System Error:", error);
     }
   };
 
@@ -43,7 +59,7 @@ export default function ApplyButton({ jobTitle }: { jobTitle: string }) {
         <Mail size={16} /> Apply for this position
       </button>
 
-      {/* POPUP MODAL APPLY FORM */}
+      {/* POPUP MODAL APPLY FORM (UI TIDAK BERUBAH SAMA SEKALI) */}
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-sm w-full max-w-lg p-8 md:p-10 relative shadow-2xl animate-in fade-in zoom-in duration-300">
@@ -83,8 +99,8 @@ export default function ApplyButton({ jobTitle }: { jobTitle: string }) {
                     <input required type="file" name="portfolio" accept=".pdf" className="text-[13px] file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:font-medium file:bg-gray-100 file:text-black hover:file:bg-gray-200 cursor-pointer" />
                   </div>
                   
-                  <button type="submit" disabled={submitting} className="w-full bg-black text-white py-4 mt-4 rounded-sm font-medium hover:bg-opacity-90 flex items-center justify-center gap-2 uppercase tracking-widest text-[13px] transition-all">
-                    {submitting ? <Loader2 size={16} className="animate-spin" /> : "Submit Application"}
+                  <button type="submit" disabled={submitting} className="w-full bg-black text-white py-4 mt-4 rounded-sm font-medium hover:bg-opacity-90 flex items-center justify-center gap-2 uppercase tracking-widest text-[13px] transition-all disabled:bg-gray-400">
+                    {submitting ? <><Loader2 size={16} className="animate-spin" /> Processing...</> : "Submit Application"}
                   </button>
                 </form>
               </>

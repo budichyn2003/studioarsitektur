@@ -10,8 +10,8 @@ export async function createNews(formData: FormData) {
     const author = formData.get('author') as string;
     const publishDate = formData.get('publishDate') as string;
     const content = formData.get('content') as string;
+    const externalLink = formData.get('externalLink') as string; // <--- TANGKAP LINK
     
-    // Mengambil semua file gambar yang diupload
     const imageFiles = formData.getAll('images') as File[];
     const imageUrls: string[] = [];
     let thumbnailUrl: string | null = null;
@@ -31,7 +31,6 @@ export async function createNews(formData: FormData) {
       }
     }
 
-    // Gambar pertama otomatis dijadikan thumbnail utama
     if (imageUrls.length > 0) {
       thumbnailUrl = imageUrls[0];
     }
@@ -43,6 +42,7 @@ export async function createNews(formData: FormData) {
         author: author || 'Admin',
         publishDate: publishDate ? new Date(publishDate) : new Date(),
         contentId: content,
+        externalLink: externalLink || null, // <--- SIMPAN LINK
         thumbnailUrl,
         imageUrls,
       },
@@ -62,6 +62,7 @@ export async function updateNews(id: string, formData: FormData) {
     const author = formData.get('author') as string;
     const publishDate = formData.get('publishDate') as string;
     const content = formData.get('content') as string;
+    const externalLink = formData.get('externalLink') as string; // <--- TANGKAP LINK
     
     const newFiles = formData.getAll('images') as File[];
     let existingUrls = JSON.parse(formData.get('existingImageUrls') as string || '[]');
@@ -81,7 +82,7 @@ export async function updateNews(id: string, formData: FormData) {
           uploadedUrls.push(data.publicUrl);
         }
       }
-      existingUrls = uploadedUrls; // Replace dengan koleksi foto baru
+      existingUrls = uploadedUrls; 
       thumbnailUrl = uploadedUrls[0];
     }
 
@@ -93,6 +94,7 @@ export async function updateNews(id: string, formData: FormData) {
         author: author || 'Admin',
         publishDate: publishDate ? new Date(publishDate) : undefined,
         contentId: content,
+        externalLink: externalLink || null, // <--- SIMPAN LINK
         thumbnailUrl: thumbnailUrl === 'null' ? null : thumbnailUrl,
         imageUrls: existingUrls,
       },
