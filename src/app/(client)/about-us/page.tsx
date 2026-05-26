@@ -11,7 +11,6 @@ export default function AboutUsPage() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [formerMembers, setFormerMembers] = useState<any[]>([]);
   
-  // State untuk Infinite Slider
   const [startIndex, setStartIndex] = useState(0);
 
   useEffect(() => {
@@ -23,7 +22,6 @@ export default function AboutUsPage() {
     });
   }, []);
 
-  // Fungsi Slider Infinite Loop (Maju & Mundur)
   const handleNext = () => {
     setStartIndex((prev) => (prev + 1) % teamMembers.length);
   };
@@ -31,10 +29,9 @@ export default function AboutUsPage() {
     setStartIndex((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
   };
 
-  // Algoritma mengambil 4 anggota aktif untuk ditampilkan (dengan dukungan Infinite Loop)
   const visibleMembers = [];
   if (teamMembers.length > 0) {
-    const displayCount = Math.min(4, teamMembers.length); // Memastikan maksimal tampil 4
+    const displayCount = Math.min(4, teamMembers.length);
     for (let i = 0; i < displayCount; i++) {
       visibleMembers.push(teamMembers[(startIndex + i) % teamMembers.length]);
     }
@@ -43,9 +40,9 @@ export default function AboutUsPage() {
   if (loading) return <div className="p-8 text-center mt-20 text-gray-400">Loading About Content...</div>; 
 
   return (
+    // LOGIC KEMBALI SEPERTI SEMULA: Kunci layar 1 viewport (h-[100dvh] overflow-hidden) secara default, lepas saat showMoreDesc true
     <div className={`w-full ${showMoreDesc ? 'min-h-[100dvh] overflow-y-auto' : 'h-[100dvh] overflow-hidden'} pt-20 pb-10 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-6 bg-white transition-all duration-300`}>
       
-      {/* REVISI HERO IMAGE: Diubah menjadi proporsi lebar (Banner style) mirip News & Career */}
       {settings.showHero && settings.heroUrl && (
         <div className="w-full max-w-5xl mx-auto flex-shrink-0">
           <div className="relative w-full h-[180px] md:h-[220px] lg:h-[30vh] rounded-sm overflow-hidden bg-gray-50 shadow-sm border border-gray-100">
@@ -54,14 +51,14 @@ export default function AboutUsPage() {
         </div>
       )}
 
-      {/* AREA TEKS DESKRIPSI */}
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 flex-shrink-0">
         <h2 className="text-black text-[20px] font-bold tracking-[0.15em] uppercase">
           {settings.title}
         </h2>
         
         <div className="text-[#333333] text-[15px] leading-[1.6] text-justify whitespace-pre-wrap w-full">
-          <p className={showMoreDesc ? "" : "line-clamp-4"}>
+          {/* FIX TEKS: Diubah menjadi line-clamp-3 agar hemat ruang vertikal */}
+          <p className={showMoreDesc ? "" : "line-clamp-3"}>
             {settings.content}
           </p>
           {settings.content && settings.content.length > 150 && (
@@ -72,12 +69,10 @@ export default function AboutUsPage() {
         </div>
       </div>
 
-      {/* SECTION: OUR TEAM DENGAN INFINITE SLIDER */}
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-4 border-t border-gray-100 pt-5 flex-shrink-0">
         <div className="flex justify-between items-end w-full">
           <h3 className="text-black text-[20px] font-bold uppercase tracking-tight">Our Team</h3>
           
-          {/* Tombol Navigasi hanya muncul jika total data member lebih dari 4 */}
           {teamMembers.length > 4 && (
             <div className="flex gap-4 text-[11px] uppercase tracking-widest text-[#999999] font-medium pb-1">
               <button onClick={handlePrev} className="hover:text-black transition-colors">Prev</button>
@@ -99,7 +94,6 @@ export default function AboutUsPage() {
         </div>
       </div>
 
-      {/* SECTION: FORMER MEMBERS */}
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-2 border-t border-gray-100 pt-4 flex-shrink-0 pb-10">
         <h3 className="text-black text-[20px] font-bold uppercase tracking-tight">Former Members</h3>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#555555] text-[14px] font-normal leading-relaxed">
