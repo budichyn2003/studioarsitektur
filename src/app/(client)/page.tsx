@@ -35,7 +35,7 @@ export default function HomePage() {
   if (images.length === 0) {
     return (
       <div className="absolute inset-0 w-full h-full overflow-hidden bg-white">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[400px] lg:text-[900px] font-bold text-[#F9F9F9] select-none z-0 leading-none tracking-tighter animate-pulse">N</div>
+        <div className="absolute left-1/2 top-2/3 -translate-x-1/2 -translate-y-1/2 text-[700px] lg:text-[900px] font-bold text-[#F9F9F9] select-none z-0 leading-none tracking-tighter animate-pulse">N</div>
       </div>
     );
   }

@@ -75,13 +75,13 @@ export default function Sidebar() {
         {/* LOGO (Di Atas) - SUDAH DIGANTI LOGO GIGIH */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0">
           <Image 
-            src="/studiogigih.png" 
+            src="/homepage.png" 
             alt="Studio Gigih Logo" 
-            width={40} 
-            height={40} 
+            width={100} 
+            height={100} 
             className="object-contain"
           />
-          <span className="text-arch-black font-medium text-[15px] tracking-wide">Studio Gigih</span>
+          <span className="text-arch-black font-medium text-[15px] tracking-wide"></span>
         </Link>
 
         {/* MENU NAVIGASI (Flex-grow memastikan dia selalu di tengah-tengah layar) */}
@@ -121,7 +121,7 @@ export default function Sidebar() {
         {/* LOGO MOBILE - SUDAH DIGANTI LOGO GIGIH */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
           <Image 
-            src="/gigih.png" 
+            src="/homepage.png" 
             alt="Studio Gigih Logo" 
             width={36} 
             height={36} 
