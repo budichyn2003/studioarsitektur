@@ -26,7 +26,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const prevProject = currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
 
   return (
-    // Gap utama dan padding atas dirapatkan (gap-8 -> gap-5, pt-12 -> pt-10)
     <div className="w-full min-h-screen pt-10 pb-32 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-5">
 
       {/* TOP NAVIGATION */}
@@ -55,29 +54,60 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {/* PROJECT INFO */}
       <div className="flex flex-col w-full max-w-3xl mt-2">
         
-        {/* PERUBAHAN: Tipografi disamakan dengan About Us (text-[20px], font-bold, tracking-[0.15em]) */}
         <h1 className="text-black text-[18px] md:text-[20px] font-bold tracking-[0.15em] uppercase leading-tight mb-1">
           {project.title}
         </h1>
-        {/* Margin bawah dikurangi agar makin compact */}
+        
         <p className="text-[#999999] text-[12px] uppercase tracking-widest mb-6">
-          {project.location}{project.buildYear ? ` — ${project.buildYear}` : ''}
+          {project.location}{project.buildYear?.trim() && project.buildYear !== '-' ? ` — ${project.buildYear}` : ''}
         </p>
 
-        {/* Grid Spesifikasi: Gap dirapatkan (gap-y-3), margin dikecilkan, label dibuat compact */}
+        {/* PERBAIKAN GRID SPESIFIKASI: Menggunakan `.trim()` agar spasi kosong tidak dirender, dan menghilangkan `m²` jika diisi `-` */}
         <div className="grid grid-cols-[130px_1fr] md:grid-cols-[180px_1fr] gap-y-3 text-[13px] mb-8">
-          {project.status && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Status</span><span className="text-black font-medium">{project.status}</span></>}
-          {project.architectInCharge && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Architect</span><span className="text-black font-medium">{project.architectInCharge}</span></>}
-          {project.drafter && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>}
-          {project.construction && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Construction</span><span className="text-black font-medium">{project.construction}</span></>}
-          {project.interiorConstruction && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior</span><span className="text-black font-medium">{project.interiorConstruction}</span></>}
-          {project.siteArea && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Site Area</span><span className="text-black font-medium">{project.siteArea} m²</span></>}
-          {project.constructedArea && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Const. Area</span><span className="text-black font-medium">{project.constructedArea} m²</span></>}
-          {project.collaborate && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Collaborate</span><span className="text-black font-medium">{project.collaborate}</span></>}
-          {project.photographs && <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Photographs</span><span className="text-black font-medium">{project.photographs}</span></>}
+          
+          {project.status?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Status</span><span className="text-black font-medium">{project.status}</span></>
+          ) : null}
+          
+          {project.architectInCharge?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Architect</span><span className="text-black font-medium">{project.architectInCharge}</span></>
+          ) : null}
+          
+          {project.drafter?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>
+          ) : null}
+
+          {/* Interior Field (Sebelumnya tidak dipanggil ke UI) */}
+          {project.interior?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior</span><span className="text-black font-medium">{project.interior}</span></>
+          ) : null}
+          
+          {project.construction?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Construction</span><span className="text-black font-medium">{project.construction}</span></>
+          ) : null}
+          
+          {project.interiorConstruction?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior Const.</span><span className="text-black font-medium">{project.interiorConstruction}</span></>
+          ) : null}
+          
+          {project.siteArea?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Site Area</span><span className="text-black font-medium">{project.siteArea}{project.siteArea.trim() !== '-' && ' m²'}</span></>
+          ) : null}
+          
+          {project.constructedArea?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Const. Area</span><span className="text-black font-medium">{project.constructedArea}{project.constructedArea.trim() !== '-' && ' m²'}</span></>
+          ) : null}
+          
+          {project.collaborate?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Collaborate</span><span className="text-black font-medium">{project.collaborate}</span></>
+          ) : null}
+          
+          {project.photographs?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Photographs</span><span className="text-black font-medium">{project.photographs}</span></>
+          ) : null}
+
         </div>
 
-        {/* Description: Teks size sedikit dirapatkan dari 15px jadi 14px */}
         <div className="relative text-[#333333] text-[14px] leading-[1.8] text-justify whitespace-pre-wrap">
           <input type="checkbox" id="desc-toggle" className="peer hidden" />
           <div className="line-clamp-3 peer-checked:line-clamp-none transition-all duration-300">

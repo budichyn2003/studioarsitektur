@@ -32,7 +32,6 @@ export async function createProject(formData: FormData) {
 
     if (validImages.length === 0) throw new Error("Minimal 1 gambar diperlukan");
 
-    // Urutan gambar (order) ditetapkan MUTLAK berdasarkan array yang dikirim dari form
     const uploadedImagesData = await Promise.all(
       validImages.map(async (file, index) => {
         const fileExt = file.name.split('.').pop();
@@ -43,7 +42,6 @@ export async function createProject(formData: FormData) {
 
         const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(fileName);
         
-        // Penetapan Order: 0 adalah cover
         return { url: publicUrl, width: 1920, height: 1080, order: index };
       })
     );
@@ -57,8 +55,8 @@ export async function createProject(formData: FormData) {
         architect,
         photographer,
         interior,
-        construction,         // <--- TAMBAHKAN INI
-        interiorConstruction, // <--- TAMBAHKAN INI
+        construction,
+        interiorConstruction,
         descriptionId: description, 
         projectDate: projectDateInput ? new Date(projectDateInput) : new Date(),
         buildYear,
@@ -110,21 +108,22 @@ export async function updateProject(id: string, formData: FormData) {
     const collaborate = formData.get('collaborate') as string;
     const photographs = formData.get('photographs') as string;
     const interior = formData.get('interior') as string;
+    
+    // PERBAIKAN: Menangkap data Construction & Interior Construction yang sebelumnya terlewat
+    const construction = formData.get('construction') as string;
+    const interiorConstruction = formData.get('interiorConstruction') as string;
 
-    // AMBIL INSTRUKSI MUTLAK DARI FRONTEND
     const finalOrder = JSON.parse(formData.get('finalOrder') as string || '[]');
     const deletedImages = JSON.parse(formData.get('deletedImages') as string || '[]');
     const newFiles = formData.getAll('newFiles') as File[];
     const newFilesIds = formData.getAll('newFilesIds') as string[];
 
-    // 1. Eksekusi Penghapusan Gambar
     if (deletedImages.length > 0) {
       await prisma.projectImage.deleteMany({
         where: { id: { in: deletedImages } }
       });
     }
 
-    // 2. Upload Gambar Baru ke Supabase
     const uploadedNewFiles: { id: string, url: string }[] = [];
     for (let i = 0; i < newFiles.length; i++) {
       const file = newFiles[i];
@@ -140,19 +139,16 @@ export async function updateProject(id: string, formData: FormData) {
       }
     }
 
-    // 3. Update & Insert Data ke Database dengan ORDER yang Mutlak
     for (let i = 0; i < finalOrder.length; i++) {
       const item = finalOrder[i];
       
       if (item.startsWith('existing_')) {
-        // Jika gambar lama, cukup perbarui urutan index-nya saja
         const imageId = item.replace('existing_', '');
         await prisma.projectImage.update({
           where: { id: imageId },
           data: { order: i }
         });
       } else {
-        // Jika gambar baru, cari url-nya dan buat data baru di database
         const uploaded = uploadedNewFiles.find(u => u.id === item);
         if (uploaded) {
           await prisma.projectImage.create({
@@ -162,7 +158,6 @@ export async function updateProject(id: string, formData: FormData) {
       }
     }
 
-    // 4. Update data teks project
     await prisma.project.update({
       where: { id },
       data: {
@@ -180,6 +175,9 @@ export async function updateProject(id: string, formData: FormData) {
         collaborate,
         photographs,
         interior,
+        // PERBAIKAN: Menyimpan data construction ke database agar bisa di-autofill
+        construction,
+        interiorConstruction,
       },
     });
 
@@ -195,7 +193,6 @@ export async function getProject(id: string) {
   try {
     const project = await prisma.project.findUnique({
       where: { id },
-      // Mengambil gambar secara mutlak berdasarkan kolom 'order' dari database
       include: { images: { orderBy: { order: 'asc' } } }
     });
     return project;
