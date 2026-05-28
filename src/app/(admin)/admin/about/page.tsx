@@ -10,7 +10,12 @@ export default function AdminAboutPage() {
   const [data, setData] = useState<any>(null);
   const [team, setTeam] = useState<any[]>([]);
   const [formers, setFormers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  
+  // PERBAIKAN: Pisahkan state loading agar tidak saling mengganggu
+  const [isUpdatingAbout, setIsUpdatingAbout] = useState(false);
+  const [isAddingTeam, setIsAddingTeam] = useState(false);
+  const [isAddingFormer, setIsAddingFormer] = useState(false);
+  
   const [heroPreview, setHeroPreview] = useState<string>('');
   const router = useRouter();
 
@@ -21,7 +26,6 @@ export default function AdminAboutPage() {
         setHeroPreview(res.data.heroUrl);
       }
     });
-    // PERBAIKAN: Tambahkan || [] di sini agar TypeScript Vercel tenang
     getTeamMembers().then(res => res.success && setTeam(res.data || []));
     getFormerMembers().then(res => res.success && setFormers(res.data || []));
   };
@@ -35,7 +39,7 @@ export default function AdminAboutPage() {
 
   const handleUpdateAbout = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setIsUpdatingAbout(true);
     const formData = new FormData(e.currentTarget);
     formData.append('existingHeroUrl', data.heroUrl);
     formData.append('existingThumbnails', JSON.stringify(data.thumbnails));
@@ -45,29 +49,29 @@ export default function AdminAboutPage() {
       alert('About Us Settings updated!');
       router.refresh();
     } else alert('Error: ' + result.error);
-    setLoading(false);
+    setIsUpdatingAbout(false);
   };
 
   const handleAddTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setIsAddingTeam(true);
     const result = await addTeamMember(new FormData(e.currentTarget));
     if (result.success) {
       (e.target as HTMLFormElement).reset();
       loadData();
     }
-    setLoading(false);
+    setIsAddingTeam(false);
   };
 
   const handleAddFormer = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setIsAddingFormer(true);
     const result = await addFormerMember(new FormData(e.currentTarget));
     if (result.success) {
       (e.target as HTMLFormElement).reset();
       loadData();
     }
-    setLoading(false);
+    setIsAddingFormer(false);
   };
 
   if (!data) return <div className="p-8 mt-20 text-center">Loading...</div>;
@@ -103,8 +107,10 @@ export default function AdminAboutPage() {
             <label className="text-gray-600 text-[14px]">Description Content</label>
             <textarea name="content" rows={6} defaultValue={data.content} required className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-black resize-y" />
           </div>
-          <button type="submit" disabled={loading} className="bg-arch-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:opacity-90 disabled:bg-gray-400 transition-all mt-2">
-            {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />} Save About Text & Image
+          
+          {/* PERBAIKAN STATE PADA TOMBOL */}
+          <button type="submit" disabled={isUpdatingAbout} className="bg-arch-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:opacity-90 disabled:bg-gray-400 transition-all mt-2">
+            {isUpdatingAbout ? <Loader2 className="animate-spin" /> : <Save size={20} />} Save About Text & Image
           </button>
         </form>
       </div>
@@ -126,8 +132,10 @@ export default function AdminAboutPage() {
               <label className="text-[13px] text-gray-500">Photo</label>
               <input type="file" name="image" required accept="image/*" className="text-sm" />
             </div>
-            <button type="submit" disabled={loading} className="bg-black text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm hover:opacity-80">
-              <Plus size={16} /> Add
+            
+            {/* PERBAIKAN STATE PADA TOMBOL */}
+            <button type="submit" disabled={isAddingTeam} className="bg-black text-white px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm hover:opacity-80 disabled:opacity-50 min-w-[100px]">
+              {isAddingTeam ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Add
             </button>
           </form>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -138,6 +146,7 @@ export default function AdminAboutPage() {
                   <p className="font-bold text-sm text-black truncate">{member.name}</p>
                   <p className="text-xs text-gray-600 truncate">{member.role}</p>
                 </div>
+                {/* Agar hapus lebih aman kita tidak pasang loading di sini dulu, biarkan instant reload sesuai loadData() */}
                 <button onClick={() => deleteTeamMember(member.id).then(loadData)} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 size={14} />
                 </button>
@@ -156,8 +165,10 @@ export default function AdminAboutPage() {
               <label className="text-[13px] text-gray-500">Former Name</label>
               <input name="name" required className="border border-gray-200 p-2 rounded-lg text-sm" placeholder="E.g., Studio Avery" />
             </div>
-            <button type="submit" disabled={loading} className="bg-black text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm hover:opacity-80">
-              <Plus size={16} /> Add
+            
+            {/* PERBAIKAN STATE PADA TOMBOL */}
+            <button type="submit" disabled={isAddingFormer} className="bg-black text-white px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm hover:opacity-80 disabled:opacity-50 min-w-[100px]">
+              {isAddingFormer ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Add
             </button>
           </form>
           <div className="flex flex-wrap gap-3">

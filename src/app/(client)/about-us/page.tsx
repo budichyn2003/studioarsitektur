@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { getAboutSettings, getTeamMembers, getFormerMembers } from '@/app/actions/about';
 
@@ -11,7 +11,13 @@ export default function AboutUsPage() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [formerMembers, setFormerMembers] = useState<any[]>([]);
   
+  // LOGIC ASLI: startIndex untuk infinite loop
   const [startIndex, setStartIndex] = useState(0);
+
+  // LOGIC TAMBAHAN: Untuk gesture drag & touchpad
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const [dragEndX, setDragEndX] = useState<number | null>(null);
+  const wheelTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     Promise.all([getAboutSettings(), getTeamMembers(), getFormerMembers()]).then(([aboutRes, teamRes, formerRes]) => {
@@ -22,6 +28,7 @@ export default function AboutUsPage() {
     });
   }, []);
 
+  // LOGIC ASLI: Infinite Loop (Kembali ke awal kalau habis)
   const handleNext = () => {
     setStartIndex((prev) => (prev + 1) % teamMembers.length);
   };
@@ -29,6 +36,42 @@ export default function AboutUsPage() {
     setStartIndex((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
   };
 
+  // HANDLER: Mouse & Touch Drag
+  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    if ('touches' in e) setDragStartX(e.touches[0].clientX);
+    else setDragStartX((e as React.MouseEvent).clientX);
+  };
+
+  const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (dragStartX === null) return;
+    if ('touches' in e) setDragEndX(e.touches[0].clientX);
+    else setDragEndX((e as React.MouseEvent).clientX);
+  };
+
+  const handleDragEnd = () => {
+    if (dragStartX !== null && dragEndX !== null) {
+      const distance = dragStartX - dragEndX;
+      if (distance > 50) handleNext();
+      else if (distance < -50) handlePrev();
+    }
+    setDragStartX(null);
+    setDragEndX(null);
+  };
+
+  // HANDLER: Touchpad 2 Jari
+  const handleWheel = (e: React.WheelEvent) => {
+    if (wheelTimeout.current) return;
+    if (Math.abs(e.deltaX) > 30) {
+      if (e.deltaX > 30) handleNext();
+      else handlePrev();
+      
+      wheelTimeout.current = setTimeout(() => {
+        wheelTimeout.current = null;
+      }, 400); 
+    }
+  };
+
+  // LOGIC ASLI: Mapping data agar muter terus
   const visibleMembers = [];
   if (teamMembers.length > 0) {
     const displayCount = Math.min(4, teamMembers.length);
@@ -40,7 +83,6 @@ export default function AboutUsPage() {
   if (loading) return <div className="p-8 text-center mt-20 text-gray-400">Loading About Content...</div>; 
 
   return (
-    // LOGIC KEMBALI SEPERTI SEMULA: Kunci layar 1 viewport (h-[100dvh] overflow-hidden) secara default, lepas saat showMoreDesc true
     <div className={`w-full ${showMoreDesc ? 'min-h-[100dvh] overflow-y-auto' : 'h-[100dvh] overflow-hidden'} pt-20 pb-10 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-6 bg-white transition-all duration-300`}>
       
       {settings.showHero && settings.heroUrl && (
@@ -57,7 +99,6 @@ export default function AboutUsPage() {
         </h2>
         
         <div className="text-[#333333] text-[15px] leading-[1.6] text-justify whitespace-pre-wrap w-full">
-          {/* FIX TEKS: Diubah menjadi line-clamp-3 agar hemat ruang vertikal */}
           <p className={showMoreDesc ? "" : "line-clamp-3"}>
             {settings.content}
           </p>
@@ -81,11 +122,22 @@ export default function AboutUsPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        {/* LOGIC ASLI: Dikembalikan ke Grid statis, ditambah event listener saja */}
+        <div 
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 cursor-grab active:cursor-grabbing select-none"
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+          onMouseDown={handleDragStart}
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onWheel={handleWheel}
+        >
           {visibleMembers.map((member, idx) => (
-            <div key={`${member.id}-${idx}`} className="group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden cursor-pointer animate-in fade-in duration-500">
-              <Image src={member.imageUrl} alt={member.name} fill className="object-cover object-center transition-all duration-700 group-hover:blur-[2px] group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 25vw" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center pointer-events-none">
+            <div key={`${member.id}-${idx}`} className="group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden pointer-events-none md:pointer-events-auto animate-in fade-in duration-500">
+              <Image src={member.imageUrl} alt={member.name} fill draggable={false} unoptimized={true} className="object-cover object-center transition-all duration-700 md:group-hover:blur-[2px] md:group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 25vw" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center pointer-events-none hidden md:flex">
                 <h4 className="text-white text-[16px] font-bold uppercase tracking-wide translate-y-2 group-hover:translate-y-0 transition-transform duration-500">{member.name}</h4>
                 <p className="text-white/80 text-[10px] tracking-[0.1em] mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 uppercase">{member.role}</p>
               </div>

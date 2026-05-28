@@ -11,7 +11,6 @@ export async function getContactSettings() {
     if (!setting) {
       setting = await prisma.contactSetting.create({
         data: {
-          // PERBAIKAN: Masukkan subheadline agar Prisma tidak protes
           subheadline: "We are always open to discussing new projects, creative ideas or opportunities to be part of your visions."
         }
       });
