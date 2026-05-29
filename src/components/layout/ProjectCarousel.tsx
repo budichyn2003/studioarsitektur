@@ -23,7 +23,6 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
     const handleScroll = () => {
       if (images.length === 0) return;
 
-      // Menggunakan getBoundingClientRect untuk akurasi 100% di layar (Bebas Bug Offset)
       const containerRect = container.getBoundingClientRect();
       const containerCenter = containerRect.left + containerRect.width / 2;
 
@@ -42,7 +41,6 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
         }
       }
 
-      // Deteksi ujung kanan (toleransi 10px untuk pembulatan layar)
       const isAtEnd = container.scrollWidth - container.scrollLeft - container.clientWidth <= 10;
       if (isAtEnd) {
          closestIndex = images.length - 1;
@@ -52,8 +50,6 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Panggil saat pertama kali load agar tombol langsung aktif yang benar
     const timer = setTimeout(handleScroll, 100);
 
     return () => {
@@ -66,25 +62,36 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
     const container = containerRef.current;
     if (!container) return;
     
-    // Kunci agar tidak bisa request index di luar jumlah gambar
     const safeIndex = Math.max(0, Math.min(index, images.length - 1));
-    const child = container.children[safeIndex] as HTMLElement;
+    const targetElement = container.children[safeIndex] as HTMLElement;
+    if (!targetElement) return;
+
+    // Hitung posisi scroll yang tepat menggunakan bounding rect
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = targetElement.getBoundingClientRect();
     
-    if (child) {
-      // Fungsi super mulus bawaan browser (Dijamin 1-1 dan mentok di tengah)
-      child.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest'
+    // Posisi kiri target relatif terhadap container kiri + scroll saat ini
+    const targetLeftRelativeToContainer = targetRect.left - containerRect.left + container.scrollLeft;
+    // Scroll ke posisi agar target berada di tengah container
+    const targetScrollLeft = targetLeftRelativeToContainer - (containerRect.width / 2) + (targetRect.width / 2);
+    
+    // Pastikan tidak melebihi batas scroll
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    const clampedScrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
+    
+    // Gunakan requestAnimationFrame untuk memastikan scroll terjadi setelah layout stabil
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        left: clampedScrollLeft,
+        behavior: 'smooth'
       });
-    }
+    });
   };
 
   return (
     <div className="w-full max-w-5xl flex flex-col gap-2">
       <div
         ref={containerRef}
-        // Ditambahkan "snap-mandatory" agar di-scroll via HP juga otomatis mengunci dengan rapi
         className="w-full flex flex-row gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-2 scroll-smooth"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >

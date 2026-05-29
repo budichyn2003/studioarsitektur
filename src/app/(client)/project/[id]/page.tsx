@@ -25,8 +25,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const currentIndex = allProjects.findIndex(p => p.id === project.id);
   
-  const nextProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
-  const prevProject = currentIndex !== -1 && currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
+  // Perbaikan: tukar prev dan next
+  const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
+  const nextProject = currentIndex !== -1 && currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
 
   return (
     <div className="w-full min-h-screen pt-10 pb-32 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-5">
