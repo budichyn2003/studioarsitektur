@@ -232,10 +232,6 @@ export default function CreateProjectPage() {
               <label className="text-arch-grayMenu text-[14px]">Photographs</label>
               <input name="photographs" type="text" placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Interior</label>
-              <input name="interior" type="text" placeholder="e.g. Jane Doe" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
-            </div>
           </div>
 
           {/* BARIS BARU UNTUK CONSTRUCTION & INTERIOR CONSTRUCTION */}

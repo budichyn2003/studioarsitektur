@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProjectCarousel from "@/components/layout/ProjectCarousel";
 
-// PERBAIKAN: Mematikan Caching agar selalu membaca data paling baru dari Database (Anti 404 / Data Basi)
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -17,7 +16,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     }
   });
 
-  // Jika project tidak ada di DB, lempar ke 404
   if (!project) return notFound();
 
   const allProjects = await prisma.project.findMany({
@@ -27,14 +25,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const currentIndex = allProjects.findIndex(p => p.id === project.id);
   
-  // PERBAIKAN: Pastikan currentIndex valid (!== -1) agar tidak error saat mencari prev/next
   const nextProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
   const prevProject = currentIndex !== -1 && currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
 
   return (
     <div className="w-full min-h-screen pt-10 pb-32 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col gap-5">
 
-      {/* TOP NAVIGATION */}
       <div className="flex justify-between items-end w-full max-w-5xl mb-1">
         <div className="flex flex-col">
           {prevProject ? (
@@ -54,22 +50,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      {/* CAROUSEL */}
       <ProjectCarousel images={project.images || []} title={project.title} />
 
-      {/* PROJECT INFO */}
       <div className="flex flex-col w-full max-w-3xl mt-2">
         
         <h1 className="text-black text-[18px] md:text-[20px] font-bold tracking-[0.15em] uppercase leading-tight mb-1">
           {project.title}
         </h1>
         
-        {/* PERBAIKAN: Menghormati rule jika diisi "-" maka tetap tampil sebagai "-" */}
         <p className="text-[#999999] text-[12px] uppercase tracking-widest mb-6">
           {project.location}{project.buildYear?.trim() ? ` — ${project.buildYear}` : ''}
         </p>
 
-        {/* LOGIC CONDITIONAL RENDER YANG KETAT SESUAI REQUEST */}
         <div className="grid grid-cols-[130px_1fr] md:grid-cols-[180px_1fr] gap-y-3 text-[13px] mb-8">
           
           {project.status?.trim() ? (
@@ -83,10 +75,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {project.drafter?.trim() ? (
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>
           ) : null}
-
-          {project.interior?.trim() ? (
-            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior</span><span className="text-black font-medium">{project.interior}</span></>
-          ) : null}
           
           {project.construction?.trim() ? (
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Construction</span><span className="text-black font-medium">{project.construction}</span></>
@@ -96,7 +84,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior Const.</span><span className="text-black font-medium">{project.interiorConstruction}</span></>
           ) : null}
           
-          {/* PERBAIKAN M²: Tetap tampilkan m² KECUALI field diisi "-" */}
           {project.siteArea?.trim() ? (
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Site Area</span><span className="text-black font-medium">{project.siteArea}{project.siteArea.trim() !== '-' && ' m²'}</span></>
           ) : null}
@@ -115,7 +102,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
         </div>
 
-        {/* DESCRIPTION */}
         <div className="relative text-[#333333] text-[14px] leading-[1.8] text-justify whitespace-pre-wrap">
           <input type="checkbox" id="desc-toggle" className="peer hidden" />
           <div className="line-clamp-3 peer-checked:line-clamp-none transition-all duration-300">

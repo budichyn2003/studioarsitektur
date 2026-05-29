@@ -12,7 +12,6 @@ export async function createProject(formData: FormData) {
     const description = formData.get('description') as string;
     const architect = formData.get('architect') as string;
     const photographer = formData.get('photographer') as string;
-    const interior = formData.get('interior') as string;
     const projectDateInput = formData.get('projectDate') as string;
     
     const buildYear = formData.get('buildYear') as string;
@@ -23,7 +22,6 @@ export async function createProject(formData: FormData) {
     const constructedArea = formData.get('constructedArea') as string;
     const collaborate = formData.get('collaborate') as string;
     const photographs = formData.get('photographs') as string;
-
     const construction = formData.get('construction') as string;
     const interiorConstruction = formData.get('interiorConstruction') as string;
 
@@ -36,12 +34,9 @@ export async function createProject(formData: FormData) {
       validImages.map(async (file, index) => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}-${index}.${fileExt}`;
-        
         const { error: uploadError } = await supabase.storage.from('project-images').upload(fileName, file);
         if (uploadError) throw uploadError;
-
         const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(fileName);
-        
         return { url: publicUrl, width: 1920, height: 1080, order: index };
       })
     );
@@ -54,7 +49,6 @@ export async function createProject(formData: FormData) {
         location,
         architect,
         photographer,
-        interior,
         construction,
         interiorConstruction,
         descriptionId: description, 
@@ -107,9 +101,6 @@ export async function updateProject(id: string, formData: FormData) {
     const constructedArea = formData.get('constructedArea') as string;
     const collaborate = formData.get('collaborate') as string;
     const photographs = formData.get('photographs') as string;
-    const interior = formData.get('interior') as string;
-    
-    // PERBAIKAN: Menangkap data Construction & Interior Construction yang sebelumnya terlewat
     const construction = formData.get('construction') as string;
     const interiorConstruction = formData.get('interiorConstruction') as string;
 
@@ -174,8 +165,6 @@ export async function updateProject(id: string, formData: FormData) {
         constructedArea,
         collaborate,
         photographs,
-        interior,
-        // PERBAIKAN: Menyimpan data construction ke database agar bisa di-autofill
         construction,
         interiorConstruction,
       },

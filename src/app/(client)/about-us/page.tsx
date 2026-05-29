@@ -11,12 +11,15 @@ export default function AboutUsPage() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [formerMembers, setFormerMembers] = useState<any[]>([]);
   
-  // LOGIC ASLI: startIndex untuk infinite loop
   const [startIndex, setStartIndex] = useState(0);
+  const [direction, setDirection] = useState(1); 
 
-  // LOGIC TAMBAHAN: Untuk gesture drag & touchpad
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragEndX, setDragEndX] = useState<number | null>(null);
+  
+  // LOGIC BARU: Menyimpan posisi pergeseran fisik secara real-time saat di-drag
+  const [dragOffset, setDragOffset] = useState(0); 
+  
   const wheelTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -28,24 +31,28 @@ export default function AboutUsPage() {
     });
   }, []);
 
-  // LOGIC ASLI: Infinite Loop (Kembali ke awal kalau habis)
   const handleNext = () => {
+    setDirection(1);
     setStartIndex((prev) => (prev + 1) % teamMembers.length);
   };
   const handlePrev = () => {
+    setDirection(-1); 
     setStartIndex((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
   };
 
-  // HANDLER: Mouse & Touch Drag
   const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
     if ('touches' in e) setDragStartX(e.touches[0].clientX);
     else setDragStartX((e as React.MouseEvent).clientX);
+    setDragOffset(0);
   };
 
   const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (dragStartX === null) return;
-    if ('touches' in e) setDragEndX(e.touches[0].clientX);
-    else setDragEndX((e as React.MouseEvent).clientX);
+    const currentX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    setDragEndX(currentX);
+    
+    // Memberikan respons geser pada Grid mengikuti kursor/jari (dengan efek friksi 0.4 agar elegan)
+    setDragOffset((currentX - dragStartX) * 0.4); 
   };
 
   const handleDragEnd = () => {
@@ -56,9 +63,9 @@ export default function AboutUsPage() {
     }
     setDragStartX(null);
     setDragEndX(null);
+    setDragOffset(0); // Snap otomatis kembali ke tengah saat dilepas
   };
 
-  // HANDLER: Touchpad 2 Jari
   const handleWheel = (e: React.WheelEvent) => {
     if (wheelTimeout.current) return;
     if (Math.abs(e.deltaX) > 30) {
@@ -71,7 +78,6 @@ export default function AboutUsPage() {
     }
   };
 
-  // LOGIC ASLI: Mapping data agar muter terus
   const visibleMembers = [];
   if (teamMembers.length > 0) {
     const displayCount = Math.min(4, teamMembers.length);
@@ -122,27 +128,34 @@ export default function AboutUsPage() {
           )}
         </div>
 
-        {/* LOGIC ASLI: Dikembalikan ke Grid statis, ditambah event listener saja */}
-        <div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 cursor-grab active:cursor-grabbing select-none"
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          onMouseDown={handleDragStart}
-          onMouseMove={handleDragMove}
-          onMouseUp={handleDragEnd}
-          onMouseLeave={handleDragEnd}
-          onWheel={handleWheel}
-        >
-          {visibleMembers.map((member, idx) => (
-            <div key={`${member.id}-${idx}`} className="group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden pointer-events-none md:pointer-events-auto animate-in fade-in duration-500">
-              <Image src={member.imageUrl} alt={member.name} fill draggable={false} unoptimized={true} className="object-cover object-center transition-all duration-700 md:group-hover:blur-[2px] md:group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 25vw" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center pointer-events-none hidden md:flex">
-                <h4 className="text-white text-[16px] font-bold uppercase tracking-wide translate-y-2 group-hover:translate-y-0 transition-transform duration-500">{member.name}</h4>
-                <p className="text-white/80 text-[10px] tracking-[0.1em] mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 uppercase">{member.role}</p>
+        {/* PERBAIKAN WRAPPER: Ditambahkan efek translasi (geser) dinamis untuk merespons tarikan mouse/jari */}
+        <div className="w-full overflow-hidden">
+          <div 
+            className={`grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 cursor-grab active:cursor-grabbing select-none transition-transform ${dragStartX !== null ? 'duration-0' : 'duration-500 ease-out'}`}
+            style={{ transform: `translateX(${dragOffset}px)` }}
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+            onMouseDown={handleDragStart}
+            onMouseMove={handleDragMove}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={handleDragEnd}
+            onWheel={handleWheel}
+          >
+            {visibleMembers.map((member, idx) => (
+              // PERBAIKAN ANIMASI: Menggunakan slide-in-from-*-full (100% jarak) dengan durasi lebih pelan (700ms)
+              <div 
+                key={`${member.id}-${startIndex}-${idx}`} 
+                className={`group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden pointer-events-none md:pointer-events-auto animate-in fade-in duration-700 ease-out ${direction === 1 ? 'slide-in-from-right-full' : 'slide-in-from-left-full'}`}
+              >
+                <Image src={member.imageUrl} alt={member.name} fill draggable={false} unoptimized={true} className="object-cover object-center transition-all duration-700 md:group-hover:blur-[2px] md:group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 25vw" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center pointer-events-none hidden md:flex">
+                  <h4 className="text-white text-[16px] font-bold uppercase tracking-wide translate-y-2 group-hover:translate-y-0 transition-transform duration-500">{member.name}</h4>
+                  <p className="text-white/80 text-[10px] tracking-[0.1em] mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 uppercase">{member.role}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
