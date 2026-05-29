@@ -23,6 +23,11 @@ export const metadata: Metadata = {
   authors: [{ name: 'Studio Gigih' }],
   creator: 'Studio Gigih',
   metadataBase: new URL('https://www.studiogigih.com'),
+
+  // 👇 TAMBAHKAN KODE VERIFIKASI GOOGLE DI SINI 👇
+  verification: {
+    google: '<meta name="google-site-verification" content="ts15pJaVb1PSeNaXrlP3jA2mRtwOZcNul526U8hFreY" />',
+  },
   
   openGraph: {
     type: 'website',
