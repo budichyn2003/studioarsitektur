@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { getAboutSettings, getTeamMembers, getFormerMembers } from '@/app/actions/about';
 
-// ENGINE INFINITE LOOP: Gandakan data agar runway scroll panjang
 const INFINITE_SETS = 14; 
 
 export default function AboutUsPage() {
@@ -16,8 +15,10 @@ export default function AboutUsPage() {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const [realIndex, setRealIndex] = useState(0);
+  
+  // STATE BARU: Untuk mendeteksi foto mana yang sedang di-Touch/Tap di HP
+  const [activeCard, setActiveCard] = useState<string | null>(null);
 
-  // Buat array panjang tak terhingga secara visual
   const infiniteMembers = teamMembers.length > 0 
     ? Array(INFINITE_SETS).fill(teamMembers).flat() 
     : [];
@@ -31,20 +32,20 @@ export default function AboutUsPage() {
     });
   }, []);
 
-  // LOGIC 1: Lempar posisi awal ke "Tengah array" (Rata Kiri)
   useEffect(() => {
     if (teamMembers.length > 0 && containerRef.current) {
       const centerSetStartIndex = Math.floor(INFINITE_SETS / 2) * teamMembers.length;
       setRealIndex(centerSetStartIndex);
-      const target = containerRef.current.children[centerSetStartIndex] as HTMLElement;
-      if (target) {
-        // PERBAIKAN: Harus 'start' agar rata kiri dan pas nampil 4 tanpa kepotong!
-        target.scrollIntoView({ behavior: 'auto', inline: 'start', block: 'nearest' });
-      }
+      
+      setTimeout(() => {
+        const target = containerRef.current?.children[centerSetStartIndex] as HTMLElement;
+        if (target) {
+          target.scrollIntoView({ behavior: 'auto', inline: 'start', block: 'nearest' });
+        }
+      }, 100);
     }
   }, [teamMembers]);
 
-  // LOGIC 2: Mesin deteksi scroll (Native) & Teleport Siluman
   useEffect(() => {
     const container = containerRef.current;
     if (!container || teamMembers.length === 0) return;
@@ -53,7 +54,7 @@ export default function AboutUsPage() {
 
     const handleScroll = () => {
       const containerRect = container.getBoundingClientRect();
-      const containerLeft = containerRect.left; // Menggunakan batas Kiri
+      const containerLeft = containerRect.left;
 
       let closestIdx = realIndex;
       let minDistance = Infinity;
@@ -61,10 +62,7 @@ export default function AboutUsPage() {
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
         const rect = child.getBoundingClientRect();
-        const childLeft = rect.left;
-        
-        // Cari elemen yang paling nempel ke dinding kiri container
-        const distance = Math.abs(containerLeft - childLeft);
+        const distance = Math.abs(containerLeft - rect.left);
 
         if (distance < minDistance) {
           minDistance = distance;
@@ -74,7 +72,9 @@ export default function AboutUsPage() {
 
       setRealIndex(closestIdx);
 
-      // TELEPORT SILUMAN
+      // Tutup efek card kalau user nge-scroll biar layarnya bersih lagi
+      setActiveCard(null);
+
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         const currentLogicalIndex = closestIdx % teamMembers.length;
@@ -98,14 +98,8 @@ export default function AboutUsPage() {
     };
   }, [teamMembers, realIndex]);
 
-  // LOGIC 3: Next/Prev Button
-  const handleNext = () => {
-    scrollToReal(realIndex + 1);
-  };
-
-  const handlePrev = () => {
-    scrollToReal(realIndex - 1);
-  };
+  const handleNext = () => scrollToReal(realIndex + 1);
+  const handlePrev = () => scrollToReal(realIndex - 1);
 
   const scrollToReal = (index: number) => {
     const container = containerRef.current;
@@ -115,6 +109,7 @@ export default function AboutUsPage() {
     if (target) {
       target.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
       setRealIndex(safeIndex);
+      setActiveCard(null); // Tutup efek saat navigasi
     }
   };
 
@@ -149,7 +144,6 @@ export default function AboutUsPage() {
           
           {teamMembers.length > 2 && (
             <div className="flex gap-4 text-[11px] uppercase tracking-widest text-[#999999] font-medium pb-1">
-              {/* TOMBOL BEBAS PENCET TERUS */}
               <button onClick={handlePrev} className="hover:text-black transition-colors">Prev</button>
               <button onClick={handleNext} className="hover:text-black transition-colors">Next</button>
             </div>
@@ -159,32 +153,38 @@ export default function AboutUsPage() {
         <div className="w-full overflow-hidden">
           <div 
             ref={containerRef}
-            // PERBAIKAN: scroll-smooth dihapus dari class agar teleport tidak ketahuan, diganti snap-start
             className="w-full flex flex-row gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-4"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {infiniteMembers.map((member, idx) => (
-              <div 
-                key={`${member.id}-${idx}`} 
-                // PERBAIKAN PRESISI: Lebar dihitung pas 100% muat 4 (desktop) dan 2 (mobile), pake snap-start biar rata kiri
-                className="group relative w-[calc(50%-6px)] md:w-[calc(25%-12px)] aspect-[3/4] shrink-0 snap-start bg-gray-50 rounded-sm overflow-hidden cursor-pointer"
-              >
-                <Image 
-                  src={member.imageUrl} 
-                  alt={member.name} 
-                  fill 
-                  draggable={false} 
-                  unoptimized={true} 
-                  className="object-cover object-center transition-all duration-700 group-hover:blur-[2px] group-hover:scale-[1.03]" 
-                  sizes="(max-width: 768px) 50vw, 25vw" 
-                />
-                
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center">
-                  <h4 className="text-white text-[14px] md:text-[16px] font-bold uppercase tracking-wide translate-y-2 group-hover:translate-y-0 transition-transform duration-500">{member.name}</h4>
-                  <p className="text-white/80 text-[10px] tracking-[0.1em] mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 uppercase">{member.role}</p>
+            {infiniteMembers.map((member, idx) => {
+              const cardKey = `${member.id}-${idx}`;
+              const isActive = activeCard === cardKey;
+
+              return (
+                <div 
+                  key={cardKey} 
+                  // KLIK/TOUCH EVENT: Akan memicu efek "kacamata" / blur saat disentuh
+                  onClick={() => setActiveCard(isActive ? null : cardKey)}
+                  className="group relative w-[calc((100%-12px)/2)] md:w-[calc((100%-48px)/4)] aspect-[3/4] shrink-0 snap-start bg-gray-50 rounded-sm overflow-hidden cursor-pointer"
+                >
+                  <Image 
+                    src={member.imageUrl} 
+                    alt={member.name} 
+                    fill 
+                    draggable={false} 
+                    unoptimized={true} 
+                    // md:group-hover (hanya di laptop), isActive (saat ditouch di HP)
+                    className={`object-cover object-center transition-all duration-700 md:group-hover:blur-[2px] md:group-hover:scale-[1.03] ${isActive ? 'blur-[2px] scale-[1.03]' : ''}`} 
+                    sizes="(max-width: 768px) 50vw, 25vw" 
+                  />
+                  
+                  <div className={`absolute inset-0 bg-black/40 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center ${isActive ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}>
+                    <h4 className={`text-white text-[14px] md:text-[16px] font-bold uppercase tracking-wide transition-transform duration-500 ${isActive ? 'translate-y-0' : 'translate-y-2 md:group-hover:translate-y-0'}`}>{member.name}</h4>
+                    <p className={`text-white/80 text-[10px] tracking-[0.1em] mt-1 transition-transform duration-500 uppercase ${isActive ? 'translate-y-0' : 'translate-y-2 md:group-hover:translate-y-0'}`}>{member.role}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
