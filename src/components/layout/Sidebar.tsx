@@ -66,7 +66,7 @@ export default function Sidebar() {
       {/* 1. VERSI DESKTOP (Tidak Diubah) */}
       <aside className="hidden lg:flex w-[300px] h-screen fixed left-0 top-0 flex-col pt-12 pb-10 px-12 bg-white border-r border-gray-50">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0">
-          <Image src="/homepage.png" alt="Studio Gigih Logo" width={100} height={100} className="object-contain" />
+          <Image src="/homepage.png" alt="Studio Gigih Logo" width={150} height={150} className="object-contain" />
         </Link>
         <nav className="flex-grow flex flex-col justify-center gap-6">
           {navItems.map((item) => {
