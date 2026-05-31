@@ -1,4 +1,3 @@
-// D:\Budi Cahyono Cursor - Full Stack Developer\architecture-portfolio\src\app\(client)\project\ProjectGalleryClient.tsx
 'use client';
 
 import { useState } from 'react';
@@ -25,6 +24,7 @@ export default function ProjectGalleryClient({ projects, currentCategory }: { pr
         className="block relative overflow-hidden bg-gray-50 rounded-sm cursor-pointer group"
         onClick={() => setActiveCard(isActive ? null : project.id)}
       >
+        {/* Link membungkus seluruh area agar bisa diklik masuk detail */}
         <Link href={`/project/${project.id}`}>
           {project.images && project.images.length > 0 ? (
             <Image 
@@ -40,16 +40,17 @@ export default function ProjectGalleryClient({ projects, currentCategory }: { pr
           ) : (
             <div className="w-full aspect-[4/3] flex items-center justify-center text-gray-400">No Image</div>
           )}
-        </Link>
 
-        <div className={`absolute inset-0 bg-black/20 transition-opacity duration-500 flex flex-col items-center justify-center pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}>
-          <h3 className={`text-white text-[22px] font-medium tracking-tighter uppercase transition-transform duration-500 text-center px-4 ${isActive ? 'translate-y-0' : 'translate-y-4 md:group-hover:translate-y-0'}`}>
-            {project.title}
-          </h3>
-          <p className={`text-white/90 text-[13px] tracking-[0.1em] mt-2 transition-transform duration-500 delay-75 ${isActive ? 'translate-y-0' : 'translate-y-4 md:group-hover:translate-y-0'}`}>
-            {projectYear}
-          </p>
-        </div>
+          {/* Overlay Judul - Tanpa Tombol Tambahan */}
+          <div className={`absolute inset-0 bg-black/20 transition-opacity duration-500 flex flex-col items-center justify-center pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}>
+            <h3 className={`text-white text-[22px] font-medium tracking-tighter uppercase transition-transform duration-500 text-center px-4 ${isActive ? 'translate-y-0' : 'translate-y-4 md:group-hover:translate-y-0'}`}>
+              {project.title}
+            </h3>
+            <p className={`text-white/90 text-[13px] tracking-[0.1em] mt-2 transition-transform duration-500 delay-75 ${isActive ? 'translate-y-0' : 'translate-y-4 md:group-hover:translate-y-0'}`}>
+              {projectYear}
+            </p>
+          </div>
+        </Link>
       </div>
     );
   };
