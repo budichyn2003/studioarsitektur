@@ -51,7 +51,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     getProject(projectId).then(data => {
       setProjectData(data);
       if (data?.images) {
-        // Fetch gambar sesuai urutan mutlak di database
         setImages(data.images.map((img: any) => ({ id: img.id, url: img.url, isNew: false })));
       }
     });
@@ -78,14 +77,14 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
 
   const removeImage = (index: number) => {
     const target = images[index];
-    if (!target.isNew) setDeletedIds(prev => [...prev, target.id]); // Catat ID lama untuk dihapus di DB
+    if (!target.isNew) setDeletedIds(prev => [...prev, target.id]); 
     setImages(prev => prev.filter((_, idx) => idx !== index));
   };
 
   const setAsCover = (index: number) => {
     const newImages = [...images];
     const [selected] = newImages.splice(index, 1);
-    newImages.unshift(selected); // Pindahkan paksa ke urutan pertama (Cover)
+    newImages.unshift(selected); 
     setImages(newImages);
   };
 
@@ -103,15 +102,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
 
     const formData = new FormData(e.currentTarget);
     
-    // Kirim instruksi mutlak ke Backend: "Ini urutan pastinya (0, 1, 2, dst)"
     const finalOrder = images.map(img => img.isNew ? img.id : `existing_${img.id}`);
     formData.append('finalOrder', JSON.stringify(finalOrder));
     formData.append('deletedImages', JSON.stringify(deletedIds));
 
-    // Kirim file baru fisik
     images.filter(img => img.isNew).forEach(img => {
       formData.append('newFiles', img.file!);
-      formData.append('newFilesIds', img.id); // Pasangkan ID acak dengan filenya
+      formData.append('newFilesIds', img.id); 
     });
 
     const result = await updateProject(projectId, formData);
@@ -138,7 +135,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
 
       <form className="grid grid-cols-1 lg:grid-cols-3 gap-8" onSubmit={handleSubmit}>
         
-        {/* KOLOM KIRI: MULTI IMAGE MANAGER */}
         <div className="lg:col-span-1 flex flex-col gap-4">
           <label className="font-semibold text-arch-black">Manage Gallery & Cover</label>
           <div className="grid grid-cols-2 gap-4">
@@ -174,7 +170,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* KOLOM KANAN: FORM DATA (Tidak diubah) */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6 h-max">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">Project Title</label>
@@ -234,19 +229,12 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
+          {/* URUTAN BARU */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">In Collaborate</label>
               <input name="collaborate" type="text" defaultValue={projectData.collaborate || ''} placeholder="Partner Kolaborasi" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Photographs</label>
-              <input name="photographs" type="text" defaultValue={projectData.photographs || ''} placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
-            </div> 
-          </div>
-
-          {/* BARIS BARU UNTUK CONSTRUCTION & INTERIOR CONSTRUCTION */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Construction</label>
               <input name="construction" type="text" defaultValue={projectData.construction || ''} placeholder="e.g. PT Bangun Persada" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
@@ -255,6 +243,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
               <label className="text-arch-grayMenu text-[14px]">Interior Construction</label>
               <input name="interiorConstruction" type="text" defaultValue={projectData.interiorConstruction || ''} placeholder="e.g. CV Indo Karya" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Photographs</label>
+              <input name="photographs" type="text" defaultValue={projectData.photographs || ''} placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div> 
           </div>
 
           <div className="flex flex-col gap-2 border-t border-dashed border-gray-200 pt-6 mt-2">

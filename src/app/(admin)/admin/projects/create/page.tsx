@@ -8,7 +8,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/app/actions/projects';
 
-// Mesin Kompresor Existing
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -72,13 +71,12 @@ export default function CreateProjectPage() {
     setPreviewImages(prev => prev.filter((_, idx) => idx !== index));
   };
 
-  // LOGIKA MUTLAK URUTAN & COVER
   const setAsCover = (index: number) => {
     const newFiles = [...imageFiles];
     const newPreviews = [...previewImages];
     const [selectedFile] = newFiles.splice(index, 1);
     const [selectedPreview] = newPreviews.splice(index, 1);
-    newFiles.unshift(selectedFile); // Paksa ke urutan index 0
+    newFiles.unshift(selectedFile); 
     newPreviews.unshift(selectedPreview);
     setImageFiles(newFiles);
     setPreviewImages(newPreviews);
@@ -102,7 +100,6 @@ export default function CreateProjectPage() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    // Urutan file yang di-append di sini sudah MUTLAK sama dengan visual di layar
     imageFiles.forEach(file => formData.append('images', file));
 
     const result = await createProject(formData);
@@ -124,7 +121,6 @@ export default function CreateProjectPage() {
 
       <form className="grid grid-cols-1 lg:grid-cols-3 gap-8" onSubmit={handleSubmit}>
         
-        {/* KOLOM KIRI: MULTI IMAGE MANAGER */}
         <div className="lg:col-span-1 flex flex-col gap-4">
           <label className="font-semibold text-arch-black">Project Images (Drag/Set Cover)</label>
           <div className="grid grid-cols-2 gap-4">
@@ -133,7 +129,6 @@ export default function CreateProjectPage() {
               <div key={idx} className={`relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group ${idx === 0 ? 'col-span-2 aspect-[4/3] border-arch-black border-2' : 'aspect-[3/4]'}`}>
                 <Image src={src} alt={`Preview ${idx + 1}`} fill className="object-cover" sizes="300px" />
                 
-                {/* OVERLAY ACTION MUTLAK */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-2">
                   <div className="flex justify-between w-full">
                     {idx !== 0 ? (
@@ -142,7 +137,6 @@ export default function CreateProjectPage() {
                     <button type="button" onClick={() => removeImage(idx)} className="bg-red-500 hover:bg-red-600 text-white p-1 rounded-sm transition-colors"><X size={14} /></button>
                   </div>
                   
-                  {/* Geser Urutan */}
                   <div className="flex justify-center gap-2">
                     {idx > 0 && <button type="button" onClick={() => moveImage(idx, 'left')} className="bg-white text-black p-1 rounded-full hover:scale-110 transition-transform"><ChevronLeft size={16}/></button>}
                     {idx < previewImages.length - 1 && <button type="button" onClick={() => moveImage(idx, 'right')} className="bg-white text-black p-1 rounded-full hover:scale-110 transition-transform"><ChevronRight size={16}/></button>}
@@ -163,7 +157,6 @@ export default function CreateProjectPage() {
           </div>
         </div>
 
-        {/* KOLOM KANAN: FORM DATA (Tidak diubah) */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-6 h-max">
           <div className="flex flex-col gap-2">
             <label className="text-arch-grayMenu text-[14px]">Project Title</label>
@@ -223,19 +216,12 @@ export default function CreateProjectPage() {
             </div>
           </div>
 
+          {/* URUTAN BARU */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">In Collaborate</label>
               <input name="collaborate" type="text" placeholder="Partner Kolaborasi" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-arch-grayMenu text-[14px]">Photographs</label>
-              <input name="photographs" type="text" placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
-            </div>
-          </div>
-
-          {/* BARIS BARU UNTUK CONSTRUCTION & INTERIOR CONSTRUCTION */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Construction</label>
               <input name="construction" type="text" placeholder="e.g. PT Bangun Persada" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
@@ -243,6 +229,13 @@ export default function CreateProjectPage() {
             <div className="flex flex-col gap-2">
               <label className="text-arch-grayMenu text-[14px]">Interior Construction</label>
               <input name="interiorConstruction" type="text" placeholder="e.g. CV Indo Karya" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-arch-grayMenu text-[14px]">Photographs</label>
+              <input name="photographs" type="text" placeholder="Fotografer" className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-arch-black" />
             </div>
           </div>
 

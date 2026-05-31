@@ -25,7 +25,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const currentIndex = allProjects.findIndex(p => p.id === project.id);
   
-  // Perbaikan: tukar prev dan next
   const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
   const nextProject = currentIndex !== -1 && currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
 
@@ -77,14 +76,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Drafter</span><span className="text-black font-medium">{project.drafter}</span></>
           ) : null}
           
-          {project.construction?.trim() ? (
-            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Construction</span><span className="text-black font-medium">{project.construction}</span></>
-          ) : null}
-          
-          {project.interiorConstruction?.trim() ? (
-            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior Const.</span><span className="text-black font-medium">{project.interiorConstruction}</span></>
-          ) : null}
-          
           {project.siteArea?.trim() ? (
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Site Area</span><span className="text-black font-medium">{project.siteArea}{project.siteArea.trim() !== '-' && ' m²'}</span></>
           ) : null}
@@ -93,8 +84,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Const. Area</span><span className="text-black font-medium">{project.constructedArea}{project.constructedArea.trim() !== '-' && ' m²'}</span></>
           ) : null}
           
+          {/* URUTAN BARU */}
           {project.collaborate?.trim() ? (
             <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Collaborate</span><span className="text-black font-medium">{project.collaborate}</span></>
+          ) : null}
+
+          {project.construction?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Construction</span><span className="text-black font-medium">{project.construction}</span></>
+          ) : null}
+          
+          {project.interiorConstruction?.trim() ? (
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Interior Const.</span><span className="text-black font-medium">{project.interiorConstruction}</span></>
           ) : null}
           
           {project.photographs?.trim() ? (
