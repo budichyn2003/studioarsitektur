@@ -1,8 +1,8 @@
-// D:\Budi Cahyono Cursor - Full Stack Developer\architecture-portfolio\src\app\(client)\project\page.tsx
 import { prisma } from "@/lib/prisma";
 import ProjectGalleryClient from "./ProjectGalleryClient";
 
-export default async function Page({ searchParams }: { searchParams: any }) {
+export default async function ProjectPage({ searchParams }: { searchParams: any }) {
+  // Ambil parameter URL (kategori)
   const params = await Promise.resolve(searchParams);
   const currentCategory = params?.category?.toLowerCase() || 'all';
 
@@ -10,16 +10,20 @@ export default async function Page({ searchParams }: { searchParams: any }) {
     ? { category: currentCategory.toUpperCase() as any } 
     : {};
 
+  // Ambil data dari Database
   const rawProjects = await prisma.project.findMany({
     where: whereClause,
     include: { images: { orderBy: { order: 'asc' }, take: 1 } },
   });
 
+  // Urutkan data
   const projects = rawProjects.sort((a, b) => {
     const yearA = parseInt(a.buildYear || '0') || new Date(a.projectDate).getFullYear();
     const yearB = parseInt(b.buildYear || '0') || new Date(b.projectDate).getFullYear();
-    return yearB !== yearA ? yearB - yearA : new Date(b.projectDate).getTime() - new Date(a.projectDate).getTime();
+    if (yearB !== yearA) return yearB - yearA;
+    return new Date(b.projectDate).getTime() - new Date(a.projectDate).getTime();
   });
 
+  // Oper data ke komponen Client
   return <ProjectGalleryClient projects={projects} currentCategory={currentCategory} />;
 }

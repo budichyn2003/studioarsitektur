@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from "next/link";
 import Image from "next/image";
 
-export default function ProjectGalleryClient({ projects, currentCategory }: { projects: any[], currentCategory: string }) {
+// Tambahan nilai default projects = [] agar tidak error undefined lagi
+export default function ProjectGalleryClient({ projects = [], currentCategory = 'all' }: { projects: any[], currentCategory: string }) {
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  const isTouch = useRef(false);
 
   const getMenuClass = (menuName: string) => {
     return currentCategory === menuName 
@@ -19,13 +21,21 @@ export default function ProjectGalleryClient({ projects, currentCategory }: { pr
     const isActive = activeCard === project.id;
 
     return (
-      <div 
-        key={project.id} 
-        className="block relative overflow-hidden bg-gray-50 rounded-sm cursor-pointer group"
-        onClick={() => setActiveCard(isActive ? null : project.id)}
-      >
-        {/* Link membungkus seluruh area agar bisa diklik masuk detail */}
-        <Link href={`/project/${project.id}`}>
+      <div key={project.id} className="block relative bg-gray-50 rounded-sm">
+        <Link 
+          href={`/project/${project.id}`}
+          className="block relative overflow-hidden group cursor-pointer"
+          onTouchStart={() => { isTouch.current = true; }}
+          onClick={(e) => {
+            if (isTouch.current) {
+              if (!isActive) {
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                setActiveCard(project.id);
+              }
+            }
+          }}
+        >
           {project.images && project.images.length > 0 ? (
             <Image 
               src={project.images[0].url} 
@@ -41,7 +51,6 @@ export default function ProjectGalleryClient({ projects, currentCategory }: { pr
             <div className="w-full aspect-[4/3] flex items-center justify-center text-gray-400">No Image</div>
           )}
 
-          {/* Overlay Judul - Tanpa Tombol Tambahan */}
           <div className={`absolute inset-0 bg-black/20 transition-opacity duration-500 flex flex-col items-center justify-center pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}>
             <h3 className={`text-white text-[22px] font-medium tracking-tighter uppercase transition-transform duration-500 text-center px-4 ${isActive ? 'translate-y-0' : 'translate-y-4 md:group-hover:translate-y-0'}`}>
               {project.title}
@@ -56,7 +65,10 @@ export default function ProjectGalleryClient({ projects, currentCategory }: { pr
   };
 
   return (
-    <div className="w-full min-h-screen pt-16 pb-24 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col" onClick={() => setActiveCard(null)}>
+    <div 
+      className="w-full min-h-screen pt-16 pb-24 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col" 
+      onClick={() => setActiveCard(null)}
+    >
       <div className="flex justify-end mb-12 gap-6 text-[14px] md:text-[15px]">
         <Link href="/project?category=all" className={getMenuClass('all')}>All</Link>
         <Link href="/project?category=residential" className={getMenuClass('residential')}>Residential</Link>
@@ -65,10 +77,12 @@ export default function ProjectGalleryClient({ projects, currentCategory }: { pr
       </div>
 
       <div className="flex flex-col sm:hidden gap-4">{projects.map((p, i) => renderCard(p, i))}</div>
+      
       <div className="hidden sm:flex lg:hidden w-full gap-4 md:gap-6">
         <div className="flex flex-col flex-1 gap-4 md:gap-6">{projects.filter((_, i) => i % 2 === 0).map((p, i) => renderCard(p, i * 2))}</div>
         <div className="flex flex-col flex-1 gap-4 md:gap-6">{projects.filter((_, i) => i % 2 === 1).map((p, i) => renderCard(p, i * 2 + 1))}</div>
       </div>
+      
       <div className="hidden lg:flex w-full gap-4 md:gap-6">
         <div className="flex flex-col flex-1 gap-4 md:gap-6">{projects.filter((_, i) => i % 3 === 0).map((p, i) => renderCard(p, i * 3))}</div>
         <div className="flex flex-col flex-1 gap-4 md:gap-6">{projects.filter((_, i) => i % 3 === 1).map((p, i) => renderCard(p, i * 3 + 1))}</div>
