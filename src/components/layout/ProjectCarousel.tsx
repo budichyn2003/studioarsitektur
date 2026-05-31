@@ -29,6 +29,7 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
       let closestIndex = 0;
       let minDistance = Infinity;
 
+      // Cari gambar mana yang paling dekat dengan tengah layar
       for (let i = 0; i < container.children.length; i++) {
         const child = container.children[i] as HTMLElement;
         const rect = child.getBoundingClientRect();
@@ -41,21 +42,34 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
         }
       }
 
-      // REVISI: Pembulatan menggunakan Math.ceil agar lebih kebal dari bug sub-pixel di Mobile
-      const isAtEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth - 5;
-      if (isAtEnd) {
-         closestIndex = images.length - 1;
+      const isScrollable = container.scrollWidth > container.clientWidth;
+      const scrollLeft = container.scrollLeft;
+
+      // PERBAIKAN MUTLAK: Kunci Index secara paksa jika berada di ujung kiri atau kanan
+      if (scrollLeft <= 5) {
+        // Jika sedang di ujung paling kiri, paksa index jadi 0 (Tombol Next pasti HIDUP)
+        closestIndex = 0;
+      } else if (isScrollable && (container.scrollWidth - container.clientWidth - scrollLeft <= 5)) {
+        // Jika sedang di ujung paling kanan, paksa index ke akhir (Tombol Prev pasti HIDUP)
+        closestIndex = images.length - 1;
       }
 
       setActiveIndex(closestIndex);
     };
 
+    // Dengarkan saat user melakukan scroll
     container.addEventListener('scroll', handleScroll, { passive: true });
-    const timer = setTimeout(handleScroll, 100);
+    
+    // PERBAIKAN: Gunakan ResizeObserver. Saat gambar selesai di-load dan ukuran berubah, cek ulang posisinya!
+    const resizeObserver = new ResizeObserver(() => handleScroll());
+    resizeObserver.observe(container);
+
+    // Panggil sekali saat pertama render
+    handleScroll();
 
     return () => {
       container.removeEventListener('scroll', handleScroll);
-      clearTimeout(timer);
+      resizeObserver.disconnect();
     };
   }, [images]);
 
@@ -67,12 +81,13 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
     const targetElement = container.children[safeIndex] as HTMLElement;
     
     if (targetElement) {
-      // REVISI POIN 6: Menggunakan native scrollIntoView yang dijamin akurat 100% dan tidak buggy
       targetElement.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
         block: 'nearest'
       });
+      // Update state langsung biar responsif
+      setActiveIndex(safeIndex);
     }
   };
 
@@ -107,7 +122,7 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
         <div className="flex justify-between items-center w-full text-[11px] uppercase tracking-widest text-[#999999] font-medium px-1 mt-1">
           <button
             onClick={() => scrollToImage(activeIndex - 1)}
-            className={`hover:text-black transition-colors px-2 py-1 -ml-2 ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+            className={`hover:text-black transition-colors px-2 py-1 -ml-2 ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed hover:text-[#999999]' : ''}`}
             disabled={activeIndex === 0}
           >
             Previous
@@ -115,7 +130,7 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
           
           <button
             onClick={() => scrollToImage(activeIndex + 1)}
-            className={`hover:text-black transition-colors px-2 py-1 -mr-2 ${activeIndex === images.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+            className={`hover:text-black transition-colors px-2 py-1 -mr-2 ${activeIndex === images.length - 1 ? 'opacity-30 cursor-not-allowed hover:text-[#999999]' : ''}`}
             disabled={activeIndex === images.length - 1}
           >
             Next
