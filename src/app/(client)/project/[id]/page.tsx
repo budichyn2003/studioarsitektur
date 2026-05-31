@@ -69,7 +69,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           ) : null}
           
           {project.architectInCharge?.trim() ? (
-            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Architect</span><span className="text-black font-medium">{project.architectInCharge}</span></>
+            <><span className="text-[#999999] uppercase tracking-widest text-[11px]">Architect In Charge</span><span className="text-black font-medium">{project.architectInCharge}</span></>
           ) : null}
           
           {project.drafter?.trim() ? (
