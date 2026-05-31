@@ -9,38 +9,46 @@ export default function NewsListPage() {
   const [newsList, setNewsList] = useState<any[]>([]);
   const [bannerUrl, setBannerUrl] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  
+  // REVISI: Mengatur itemsPerPage menjadi dinamis (2 untuk HP, 4 untuk Tablet/Desktop)
+  const [itemsPerPage, setItemsPerPage] = useState(4);
 
   useEffect(() => {
-    // Fetch data ke endpoint API agar pagination berjalan mulus di client
     fetch('/api/news-client')
       .then(res => res.json())
       .then(data => {
         if (data.news) setNewsList(data.news);
         if (data.banner) setBannerUrl(data.banner);
       });
+
+    // Deteksi ukuran layar secara real-time
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth < 768 ? 2 : 4);
+    };
+    handleResize(); // Set saat pertama mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const totalPages = Math.ceil(newsList.length / itemsPerPage);
+
+  // Mencegah error / halaman kosong jika pindah orientasi device
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentNews = newsList.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(newsList.length / itemsPerPage);
 
   return (
-    // PENTING: Dikunci h-[100dvh] overflow-hidden agar 100% pas 1 layar tanpa scroll
     <div className="w-full h-[100dvh] overflow-hidden pt-24 pb-6 px-6 md:px-12 lg:pl-[320px] xl:pl-[380px] pr-6 md:pr-16 flex flex-col justify-between bg-white">
       
       <div className="flex flex-col flex-grow overflow-hidden">
-        
-        {/* Typography judul tebal disamakan dengan About Us */}
         <h1 className="text-black text-[20px] font-bold tracking-[0.15em] uppercase mb-6 flex-shrink-0">
           Latest News
         </h1>
 
-        {/* Grid List Card Berita
-          Revisi: Dibuat 2 kolom memanjang ke samping (horizontal).
-          Tanpa foto, card menjadi sangat tipis/compact.
-        */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-4 w-full flex-grow overflow-hidden content-start">
           {currentNews.map((news) => {
             const formattedYear = new Date(news.publishDate).getFullYear();
@@ -57,13 +65,9 @@ export default function NewsListPage() {
                     <Calendar size={12} />
                     <span>{formattedYear}</span>
                   </div>
-                  
-                  {/* Judul dibatasi 1 baris, font lebih kecil dari "Latest News" */}
                   <h2 className="text-black text-[15px] font-semibold tracking-tight uppercase line-clamp-1 leading-tight group-hover:text-gray-600 transition-colors">
                     {news.title}
                   </h2>
-                  
-                  {/* Deskripsi memanjang ke samping */}
                   <p className="text-[#777777] text-[13px] leading-relaxed text-justify line-clamp-2 pr-4">
                     {excerpt}
                   </p>
@@ -78,10 +82,7 @@ export default function NewsListPage() {
         </div>
       </div>
 
-      {/* Bagian Bawah: Navigasi Pagination & Banner Landscape Besar */}
       <div className="flex flex-col gap-4 mt-2 flex-shrink-0">
-        
-        {/* Tombol Kontrol Halaman */}
         {totalPages > 1 && (
           <div className="flex items-center justify-start gap-4 text-sm z-20">
             <button 
@@ -102,25 +103,14 @@ export default function NewsListPage() {
           </div>
         )}
 
-        {/* REVISI BANNER BAWAH: Diperbesar sangat signifikan!
-          Tingginya (h-[200px] sd 30vh) membuatnya setara dengan gambar About Us, 
-          tapi berbentuk landscape / persegi panjang sempurna.
-        */}
         {bannerUrl && (
           <div className="w-full max-w-5xl">
             <div className="relative w-full h-[180px] md:h-[220px] lg:h-[30vh] rounded-sm overflow-hidden bg-gray-50 border border-gray-100 shadow-sm mt-1">
-              <Image 
-                src={bannerUrl} 
-                alt="News Banner" 
-                fill 
-                className="object-cover object-center transition-transform hover:scale-105 duration-700" 
-                sizes="(max-width: 1024px) 100vw, 800px" 
-              />
+              <Image src={bannerUrl} alt="News Banner" fill className="object-cover object-center transition-transform hover:scale-105 duration-700" sizes="(max-width: 1024px) 100vw, 800px" />
             </div>
           </div>
         )}
       </div>
-
     </div>
   );
 }

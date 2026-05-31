@@ -41,7 +41,8 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
         }
       }
 
-      const isAtEnd = container.scrollWidth - container.scrollLeft - container.clientWidth <= 10;
+      // REVISI: Pembulatan menggunakan Math.ceil agar lebih kebal dari bug sub-pixel di Mobile
+      const isAtEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth - 5;
       if (isAtEnd) {
          closestIndex = images.length - 1;
       }
@@ -64,28 +65,15 @@ export default function ProjectCarousel({ images, title }: ProjectCarouselProps)
     
     const safeIndex = Math.max(0, Math.min(index, images.length - 1));
     const targetElement = container.children[safeIndex] as HTMLElement;
-    if (!targetElement) return;
-
-    // Hitung posisi scroll yang tepat menggunakan bounding rect
-    const containerRect = container.getBoundingClientRect();
-    const targetRect = targetElement.getBoundingClientRect();
     
-    // Posisi kiri target relatif terhadap container kiri + scroll saat ini
-    const targetLeftRelativeToContainer = targetRect.left - containerRect.left + container.scrollLeft;
-    // Scroll ke posisi agar target berada di tengah container
-    const targetScrollLeft = targetLeftRelativeToContainer - (containerRect.width / 2) + (targetRect.width / 2);
-    
-    // Pastikan tidak melebihi batas scroll
-    const maxScrollLeft = container.scrollWidth - container.clientWidth;
-    const clampedScrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
-    
-    // Gunakan requestAnimationFrame untuk memastikan scroll terjadi setelah layout stabil
-    requestAnimationFrame(() => {
-      container.scrollTo({
-        left: clampedScrollLeft,
-        behavior: 'smooth'
+    if (targetElement) {
+      // REVISI POIN 6: Menggunakan native scrollIntoView yang dijamin akurat 100% dan tidak buggy
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
       });
-    });
+    }
   };
 
   return (

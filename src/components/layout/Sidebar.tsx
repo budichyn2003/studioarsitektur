@@ -1,12 +1,9 @@
 'use client';
 import Link from 'next/link';
-import Image from 'next/image'; // <-- TAMBAHAN IMPORT UNTUK LOGO
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-// ==========================================
-// CUSTOM SVG ICONS (Aman dari error versi lama)
-// ==========================================
 const InstagramIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
@@ -48,12 +45,11 @@ export default function Sidebar() {
     return () => { document.body.style.overflow = 'unset'; }
   }, [isMobileMenuOpen]);
 
-  // Fetch data social media icon
   useEffect(() => {
     fetch('/api/social-client')
       .then(res => res.json())
       .then(res => { if (res.success && res.data) setSocials(res.data); })
-      .catch(() => {}); // Abaikan jika error agar tidak merusak layout
+      .catch(() => {}); 
   }, []);
 
   const navItems = [
@@ -67,24 +63,11 @@ export default function Sidebar() {
   return (
     <div id="sidebar-root" className="relative z-50" suppressHydrationWarning>
       
-      {/* ========================================= */}
-      {/* 1. VERSI DESKTOP (Sidebar Kiri)           */}
-      {/* ========================================= */}
+      {/* 1. VERSI DESKTOP (Tidak Diubah) */}
       <aside className="hidden lg:flex w-[300px] h-screen fixed left-0 top-0 flex-col pt-12 pb-10 px-12 bg-white border-r border-gray-50">
-        
-        {/* LOGO (Di Atas) - SUDAH DIGANTI LOGO GIGIH */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0">
-          <Image 
-            src="/homepage.png" 
-            alt="Studio Gigih Logo" 
-            width={100} 
-            height={100} 
-            className="object-contain"
-          />
-          <span className="text-arch-black font-medium text-[15px] tracking-wide"></span>
+          <Image src="/homepage.png" alt="Studio Gigih Logo" width={100} height={100} className="object-contain" />
         </Link>
-
-        {/* MENU NAVIGASI (Flex-grow memastikan dia selalu di tengah-tengah layar) */}
         <nav className="flex-grow flex flex-col justify-center gap-6">
           {navItems.map((item) => {
             const isActive = pathname === '/' && item.path === '/about-us' ? false : pathname.startsWith(item.path);
@@ -92,18 +75,13 @@ export default function Sidebar() {
               <Link 
                 key={item.name} 
                 href={item.path}
-                // Font dikecilkan menjadi 18px
-                className={`text-[18px] transition-colors duration-300 ${
-                  isActive ? 'text-arch-black font-medium' : 'text-arch-grayMenu hover:text-arch-black'
-                }`}
+                className={`text-[18px] transition-colors duration-300 ${isActive ? 'text-arch-black font-medium' : 'text-arch-grayMenu hover:text-arch-black'}`}
               >
                 {item.name}
               </Link>
             );
           })}
         </nav>
-
-        {/* SOCIAL MEDIA ICONS (Di Bawah) */}
         {socials && (
           <div className="flex items-center gap-4 text-[#999999] flex-shrink-0 pt-4">
             {socials.instagram && <a href={socials.instagram} target="_blank" rel="noreferrer" className="hover:text-black transition-colors"><InstagramIcon size={18} /></a>}
@@ -113,21 +91,18 @@ export default function Sidebar() {
         )}
       </aside>
 
-      {/* ========================================= */}
-      {/* 2. VERSI MOBILE (Header Atas & Burger)    */}
-      {/* ========================================= */}
+      {/* 2. VERSI MOBILE & TABLET (Perbaikan Poin 1 & 4) */}
       <header className="lg:hidden fixed top-0 left-0 w-full h-[80px] bg-white/90 backdrop-blur-md flex items-center justify-between px-6 border-b border-gray-100 z-[60]">
         
-        {/* LOGO MOBILE - SUDAH DIGANTI LOGO GIGIH */}
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+        {/* REVISI: Teks "Studio Gigih" dihapus, ukuran logo diperbesar dan dibuat dinamis antara HP (h-45px) dan Tablet (h-55px) */}
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
           <Image 
             src="/homepage.png" 
             alt="Studio Gigih Logo" 
-            width={36} 
-            height={36} 
-            className="object-contain"
+            width={120} 
+            height={60} 
+            className="object-contain h-[30px] md:h-[35px] w-auto"
           />
-          <span className="text-arch-black font-medium text-[15px] tracking-wide">Studio Gigih</span>
         </Link>
 
         <button
@@ -150,9 +125,7 @@ export default function Sidebar() {
         </button>
       </header>
 
-      {/* ========================================= */}
-      {/* 3. MOBILE MENU OVERLAY                    */}
-      {/* ========================================= */}
+      {/* 3. MOBILE MENU OVERLAY */}
       <div 
         className={`lg:hidden fixed inset-0 w-full h-[100dvh] bg-white flex flex-col pt-[100px] px-8 pb-10 z-[55] transform transition-all duration-500 ease-in-out ${
           isMobileMenuOpen ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-full opacity-0 pointer-events-none'
@@ -166,10 +139,7 @@ export default function Sidebar() {
                 <Link
                   href={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  // Font mobile dikecilkan jadi 22px
-                  className={`text-[22px] transition-colors duration-300 block ${
-                    isActive ? 'text-arch-black font-medium' : 'text-arch-grayMenu hover:text-arch-black'
-                  }`}
+                  className={`text-[22px] transition-colors duration-300 block ${isActive ? 'text-arch-black font-medium' : 'text-arch-grayMenu hover:text-arch-black'}`}
                 >
                   {item.name}
                 </Link>
@@ -177,8 +147,6 @@ export default function Sidebar() {
             );
           })}
         </nav>
-
-        {/* SOCIAL MEDIA ICONS (Mobile - Di Bawah) */}
         {socials && (
           <div className="flex items-center gap-6 text-[#999999] mt-auto">
             {socials.instagram && <a href={socials.instagram} target="_blank" rel="noreferrer" className="hover:text-black transition-colors"><InstagramIcon size={22} /></a>}

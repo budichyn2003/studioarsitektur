@@ -13,13 +13,9 @@ export default function AboutUsPage() {
   
   const [startIndex, setStartIndex] = useState(0);
   const [direction, setDirection] = useState(1); 
-
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragEndX, setDragEndX] = useState<number | null>(null);
-  
-  // LOGIC BARU: Menyimpan posisi pergeseran fisik secara real-time saat di-drag
   const [dragOffset, setDragOffset] = useState(0); 
-  
   const wheelTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -50,8 +46,6 @@ export default function AboutUsPage() {
     if (dragStartX === null) return;
     const currentX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     setDragEndX(currentX);
-    
-    // Memberikan respons geser pada Grid mengikuti kursor/jari (dengan efek friksi 0.4 agar elegan)
     setDragOffset((currentX - dragStartX) * 0.4); 
   };
 
@@ -63,7 +57,7 @@ export default function AboutUsPage() {
     }
     setDragStartX(null);
     setDragEndX(null);
-    setDragOffset(0); // Snap otomatis kembali ke tengah saat dilepas
+    setDragOffset(0);
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -71,10 +65,7 @@ export default function AboutUsPage() {
     if (Math.abs(e.deltaX) > 30) {
       if (e.deltaX > 30) handleNext();
       else handlePrev();
-      
-      wheelTimeout.current = setTimeout(() => {
-        wheelTimeout.current = null;
-      }, 400); 
+      wheelTimeout.current = setTimeout(() => { wheelTimeout.current = null; }, 400); 
     }
   };
 
@@ -100,14 +91,9 @@ export default function AboutUsPage() {
       )}
 
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 flex-shrink-0">
-        <h2 className="text-black text-[20px] font-bold tracking-[0.15em] uppercase">
-          {settings.title}
-        </h2>
-        
+        <h2 className="text-black text-[20px] font-bold tracking-[0.15em] uppercase">{settings.title}</h2>
         <div className="text-[#333333] text-[15px] leading-[1.6] text-justify whitespace-pre-wrap w-full">
-          <p className={showMoreDesc ? "" : "line-clamp-3"}>
-            {settings.content}
-          </p>
+          <p className={showMoreDesc ? "" : "line-clamp-3"}>{settings.content}</p>
           {settings.content && settings.content.length > 150 && (
             <button onClick={() => setShowMoreDesc(!showMoreDesc)} className="mt-2 text-black font-semibold text-[12px] uppercase tracking-widest hover:opacity-70 block">
               {showMoreDesc ? "- Show Less" : "+ Show More"}
@@ -119,7 +105,6 @@ export default function AboutUsPage() {
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-4 border-t border-gray-100 pt-5 flex-shrink-0">
         <div className="flex justify-between items-end w-full">
           <h3 className="text-black text-[20px] font-bold uppercase tracking-tight">Our Team</h3>
-          
           {teamMembers.length > 4 && (
             <div className="flex gap-4 text-[11px] uppercase tracking-widest text-[#999999] font-medium pb-1">
               <button onClick={handlePrev} className="hover:text-black transition-colors">Prev</button>
@@ -128,7 +113,6 @@ export default function AboutUsPage() {
           )}
         </div>
 
-        {/* PERBAIKAN WRAPPER: Ditambahkan efek translasi (geser) dinamis untuk merespons tarikan mouse/jari */}
         <div className="w-full overflow-hidden">
           <div 
             className={`grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 cursor-grab active:cursor-grabbing select-none transition-transform ${dragStartX !== null ? 'duration-0' : 'duration-500 ease-out'}`}
@@ -143,10 +127,10 @@ export default function AboutUsPage() {
             onWheel={handleWheel}
           >
             {visibleMembers.map((member, idx) => (
-              // PERBAIKAN ANIMASI: Menggunakan slide-in-from-*-full (100% jarak) dengan durasi lebih pelan (700ms)
+              // REVISI POIN 5: Mengubah slide-in-from-*-full menjadi efek transisi jarak dekat (16) dipadu zoom-in-[0.98] agar pergerakan array terasa sangat smooth.
               <div 
                 key={`${member.id}-${startIndex}-${idx}`} 
-                className={`group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden pointer-events-none md:pointer-events-auto animate-in fade-in duration-700 ease-out ${direction === 1 ? 'slide-in-from-right-full' : 'slide-in-from-left-full'}`}
+                className={`group relative w-full aspect-[3/4] max-h-[22vh] md:max-h-[28vh] bg-gray-50 rounded-sm overflow-hidden pointer-events-none md:pointer-events-auto animate-in fade-in zoom-in-[0.98] duration-700 ease-out ${direction === 1 ? 'slide-in-from-right-16' : 'slide-in-from-left-16'}`}
               >
                 <Image src={member.imageUrl} alt={member.name} fill draggable={false} unoptimized={true} className="object-cover object-center transition-all duration-700 md:group-hover:blur-[2px] md:group-hover:scale-[1.03]" sizes="(max-width: 768px) 50vw, 25vw" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-3 text-center pointer-events-none hidden md:flex">
