@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import Link from "next/link";
 import Image from "next/image";
 
-// Tambahan nilai default projects = [] agar tidak error undefined lagi
 export default function ProjectGalleryClient({ projects = [], currentCategory = 'all' }: { projects: any[], currentCategory: string }) {
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const isTouch = useRef(false);
@@ -21,10 +20,11 @@ export default function ProjectGalleryClient({ projects = [], currentCategory = 
     const isActive = activeCard === project.id;
 
     return (
-      <div key={project.id} className="block relative bg-gray-50 rounded-sm">
+      // PERBAIKAN: Menggabungkan kembali overflow-hidden dengan rounded-sm di div terluar
+      <div key={project.id} className="block relative bg-gray-50 rounded-sm overflow-hidden">
         <Link 
           href={`/project/${project.id}`}
-          className="block relative overflow-hidden group cursor-pointer"
+          className="block relative group cursor-pointer"
           onTouchStart={() => { isTouch.current = true; }}
           onClick={(e) => {
             if (isTouch.current) {

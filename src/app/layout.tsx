@@ -15,7 +15,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: {
     // REVISI: Update SEO Title sesuai request
-    default: 'Studio Gigih | Architecture, Interior, Landscape Design',
+    default: 'Studio Gigih | Architecture Design',
     template: '%s | Studio Gigih' 
   },
   description: 'Portfolio of Studio Gigih, specializing in residential, public, and installation architecture.',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     locale: 'id_ID',
     url: 'https://www.studiogigih.com',
     // REVISI: Update OG Title juga agar sinkron saat di-share
-    title: 'Studio Gigih | Architecture, Interior, Landscape Design',
+    title: 'Studio Gigih | Architecture Design',
     description: 'Explore the architectural masterpieces and innovative designs by Studio Gigih.',
     siteName: 'Studio Gigih',
     images: [
